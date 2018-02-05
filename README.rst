@@ -12,7 +12,6 @@ spring networks and their elastic properties.
 * Scipy
 
 ### Authors:
-Mahdi Sadjadi
-Varda Faghir Hagh
+Mahdi Sadjadi, Varda Faghir Hagh
 
 ### Liscence
