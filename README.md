@@ -1,4 +1,4 @@
-# Rigidpy
+# RigidPy
 
 RigidPy is a library written in python to compute rigidity of a graph.
 The namespace is designed to resemble mathematical terminology. The library
