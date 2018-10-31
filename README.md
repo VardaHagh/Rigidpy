@@ -1,10 +1,12 @@
-# Rigidpy
+# RigidPy
 
-RigidPy is a library written in python to compute rigidity of a graph.
-The namespace is designed to resemble mathematical terminology. The library
-can be used to compute rigidity matrix, vibrational modes and different
-realizations of a graph. In particular, the library makes it easy to study
-spring networks and their elastic properties.
+`RigidPy` is a library written in python with minimal dependency to compute
+rigidity properties of a graph/network. The namespace is designed to
+resemble mathematical terminology unifying the research themes in mathematics,
+physics and biology.
+The library can be used to compute the rigidity matrix, vibrational properties,
+and elastic properties of the spring networks. The library also offers a set of
+tools to find different realizations of a graph for a given topology.
 
 ### Requirements
 
