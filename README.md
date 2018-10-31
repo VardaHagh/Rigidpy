@@ -9,7 +9,6 @@ spring networks and their elastic properties.
 > Requirements
 
 * Numpy
-* Networkx
 * Scipy
 
 > Authors:
