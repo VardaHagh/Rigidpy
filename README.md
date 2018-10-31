@@ -6,12 +6,12 @@ can be used to compute rigidity matrix, vibrational modes and different
 realizations of a graph. In particular, the library makes it easy to study
 spring networks and their elastic properties.
 
-> Requirements
+### Requirements
 
 * Numpy
 * Scipy
 
-> Authors:
+### Authors:
 
 * [Varda Faghir Hagh](https://github.com/vfaghirh)
 * [Mahdi Sadjadi](https://github.com/Mahdisadjadi)
