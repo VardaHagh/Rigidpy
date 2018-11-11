@@ -122,10 +122,8 @@ class Framework(object):
 
     def RigidityMatrixAxis(self, i):
         '''
-        Calculate rigidity matrix of the graph.
-        Elements are normalized position difference of connected
-        coordinates.
-         make sure edge list, first element < second element
+        Calculate rigidity matrix of the graph along an axis
+        in d dimensions. Elements are unit vectors.
         '''
         N,M=self.V,self.E
         row = np.repeat(np.arange(M),2)
@@ -139,33 +137,10 @@ class Framework(object):
 
     def RigidityMatrix(self):
         '''
-        Calculate rigidity matrix of the graph.
-        Elements are normalized position difference of connected
-        coordinates.
-         make sure edge list, first element < second element
+        Calculate rigidity matrix of the graph. For now, it simply returns
+        stable rigidity matrix.
         '''
-        N,M=self.V,self.E
-        drNorm = self.L0[:,np.newaxis]
-        dr = self.dr/drNorm
-        row = np.repeat(np.arange(M),2) # find row for non zero values
-        col = self.edges.reshape(-1) # find row andcol for non zero values
-        val = np.column_stack((dr,-dr)).reshape(-1,self.dim)
-        R = np.zeros([M,N,self.dim])
-        R[row,col]=val
-        R = R.reshape(M,-1)
-
-        if self.varCell is not None:
-            conditions = np.array(self.varCell,dtype=bool)
-            #cellDim = np.sum(conditions!=0)
-            #RCell = np.zeros([M,cellDim])
-            #print(RCell)
-            RCell = np.zeros([M,self.nbasis,self.dim])
-            valsCell = np.einsum('ij,ik->ijk',self.mn,dr[self.indexLong])
-            RCell[self.indexLong] = valsCell
-            RCell = RCell.reshape(M,-1)
-            # select only specified components
-            RCell = RCell[:, conditions]
-            R = np.append(R,RCell,axis=1)
+        R = self.RigidityMatrixStable()
         return R
 
     def HessianMatrixStable(self):
@@ -184,7 +159,7 @@ class Framework(object):
         return H
 
     def HessianMatrix(self):
-        '''calculate total Hessian.'''
+        '''calculate total Hessian = stable + unstable'''
         Hstable = self.HessianMatrixStable()
         Hdestable = self.HessianMatrixDestable()
         Htotal = Hstable + Hdestable
@@ -215,8 +190,8 @@ class Framework(object):
 
     def Eigenspace(self,eigvals=(0,4)):
         '''
-        sorted eigenvalues and eigenvectors
-        assumes the hessian is symmetric (by design)
+        Returns sorted eigenvalues and eigenvectors of
+        total Hessian matrix.
         '''
         H = self.HessianMatrix()
         evalues, evectors = SLA.eigh(H,eigvals=eigvals)
