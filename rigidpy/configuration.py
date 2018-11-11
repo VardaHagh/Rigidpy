@@ -20,7 +20,7 @@ class Configuration(object):
         self.framework = None
         self.lengths = None
 
-    def energy(self, P, L):
+    def Energy(self, P, L):
         '''
         find energy of spring network
 
@@ -38,7 +38,7 @@ class Configuration(object):
         energy = 0.5 * np.sum(np.dot(PF.K,(lengths - L)**2))
         return energy
 
-    def forces(self, P, L):
+    def Forces(self, P, L):
         coordinates = P.reshape((-1, self.dim))
         Ns,Nb = len(coordinates),len(self.edges)
         PF = self.framework
@@ -52,7 +52,7 @@ class Configuration(object):
         Force[col,row] = -vals
         return Force.sum(axis=1).reshape(-1,)
 
-    def hessian(self, P, L):
+    def Hessian(self, P, L):
         coordinates = P.reshape((-1, self.dim))
         PF = self.framework
         if len(P)>100:
@@ -63,10 +63,10 @@ class Configuration(object):
 
     def energy_minimize_Newton(self,L):
         E = np.array(self.edges,int)
-        self.initialenergy =self.energy(self.x0, L)
-        report = opt.minimize(fun=self.energy, x0=self.x0, args = (L),
-        method='Newton-CG', jac = self.forces, hess=self.hessian,
-        options={'disp': False, 'xtol': 1e-7,'return_all': False, 'maxiter': None})
+        self.initialenergy =self.Energy(self.x0, L)
+        report = opt.minimize(fun=self.Energy, x0=self.x0, args = (L),
+                              method='Newton-CG', jac = self.Forces, hess=self.Hessian,
+                              options={'disp': False, 'xtol': 1e-7,'return_all': False, 'maxiter': None})
         self.report = report
         self.finalenergy = report.fun
         P1 = report.x.reshape((-1, self.dim))

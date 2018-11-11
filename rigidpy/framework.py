@@ -11,8 +11,9 @@ from numpy.linalg import norm
 from itertools import product
 
 class Framework(object):
-    '''Base class for a framework'''
-    def __init__(self, coordinates, edges, basis, k=1, varCell=None):
+    '''Base class for a framework
+    '''
+    def __init__(self, coordinates, edges, basis, k=1, equlengths=None, varCell=None):
 
         '''Number of sites and spatial dimensions'''
         self.V, self.dim = coordinates.shape
@@ -72,10 +73,20 @@ class Framework(object):
             #indexLong = np.nonzero(lengths > self.cutoff)
             # feature for future release
 
+        '''Equilibrium or rest length of springs'''
+        if equlengths is None:
+            self.L0 = norm(self.dr,axis=1)
+        else:
+            self.L0 = equlengths
+
+        '''Tension spring stiffness'''
+        self.tension = np.dot(self.K, norm(self.dr,axis=1) - self.L0)
+        self.KP = np.diag(self.tension/self.L0)
+
     def EdgeLengths(self):
         return norm(self.dr,axis=1)
 
-    def RigidityMatrix(self):
+    def RigidityMatrixStable(self):
         '''
         Calculate rigidity matrix of the graph.
         Elements are normalized position difference of connected
@@ -84,14 +95,12 @@ class Framework(object):
         '''
         #self.dr
         N,M=self.V,self.E
-        drNorm = self.EdgeLengths()[:,np.newaxis]
-        # normalized dr
-        dr = self.dr/drNorm
+        drNorm = self.L0[:,np.newaxis]
+        dr = self.dr/drNorm # normalized dr
         # find row and col for non zero values
         row = np.repeat(np.arange(M),2)
         col = self.edges.reshape(-1)
         val = np.column_stack((dr,-dr)).reshape(-1,self.dim)
-        # form matrix
         R = np.zeros([M,N,self.dim])
         R[row,col]=val
         R = R.reshape(M,-1)
@@ -111,12 +120,80 @@ class Framework(object):
 
         return R
 
-    def RigidityMatrixSparse(self):
+    def RigidityMatrixAxis(self, i):
+        '''
+        Calculate rigidity matrix of the graph.
+        Elements are normalized position difference of connected
+        coordinates.
+         make sure edge list, first element < second element
+        '''
+        N,M=self.V,self.E
+        row = np.repeat(np.arange(M),2)
+        col = self.edges.reshape(-1)
+        dr = np.repeat([np.eye(self.dim)[i]],M,axis=0)
+        val = np.column_stack((dr,-dr)).reshape(-1,self.dim)
+        R = np.zeros([M,N,self.dim])
+        R[row,col]=val
+        R = R.reshape(M,-1)
+        return R
 
+    def RigidityMatrix(self):
+        '''
+        Calculate rigidity matrix of the graph.
+        Elements are normalized position difference of connected
+        coordinates.
+         make sure edge list, first element < second element
+        '''
+        N,M=self.V,self.E
+        drNorm = self.L0[:,np.newaxis]
+        dr = self.dr/drNorm
+        row = np.repeat(np.arange(M),2) # find row for non zero values
+        col = self.edges.reshape(-1) # find row andcol for non zero values
+        val = np.column_stack((dr,-dr)).reshape(-1,self.dim)
+        R = np.zeros([M,N,self.dim])
+        R[row,col]=val
+        R = R.reshape(M,-1)
+
+        if self.varCell is not None:
+            conditions = np.array(self.varCell,dtype=bool)
+            #cellDim = np.sum(conditions!=0)
+            #RCell = np.zeros([M,cellDim])
+            #print(RCell)
+            RCell = np.zeros([M,self.nbasis,self.dim])
+            valsCell = np.einsum('ij,ik->ijk',self.mn,dr[self.indexLong])
+            RCell[self.indexLong] = valsCell
+            RCell = RCell.reshape(M,-1)
+            # select only specified components
+            RCell = RCell[:, conditions]
+            R = np.append(R,RCell,axis=1)
+        return R
+
+    def HessianMatrixStable(self):
+        '''calculate stable Hessian.'''
+        R = self.RigidityMatrixStable()
+        H = np.dot(R.T, np.dot(self.K, R))
+        return H
+
+    def HessianMatrixDestable(self):
+        '''calculate destable Hessian.'''
+        R = self.RigidityMatrixStable()
+        H = np.dot(R.T, np.dot(self.KP, R))
+        for i in range(self.dim):
+            Raxis = self.RigidityMatrixAxis(i)
+            H += np.dot(Raxis.T, np.dot(self.KP, Raxis))
+        return H
+
+    def HessianMatrix(self):
+        '''calculate total Hessian.'''
+        Hstable = self.HessianMatrixStable()
+        Hdestable = self.HessianMatrixDestable()
+        Htotal = Hstable + Hdestable
+        return Htotal
+
+    def RigidityMatrixSparse(self):
         N,M,d=self.V,self.E,self.dim
-        drNorm = self.EdgeLengths()[:,np.newaxis]
+        drNorm = self.L0[:,np.newaxis]
         dr = self.dr/drNorm # normalized dr
-        # find row and col for non zero values
         row = np.repeat(np.arange(M),2*d)
         index_range = np.arange(0,d).reshape(-1,1)
         additive_idx = np.repeat(index_range,2*M,axis=-1)
@@ -125,15 +202,6 @@ class Framework(object):
         # form matrix
         R = csr_matrix((val,(row,col)), shape=(M,N*d))
         return R
-
-    def HessianMatrix(self):
-        '''
-        calculate Hessian or dynamical matrix
-        Shape is (dim*V-P) by (dim*V-P).
-        '''
-        R = self.RigidityMatrix()
-        H = np.dot(R.T,np.dot(self.K,R))
-        return H
 
     def HessianMatrixSparse(self):
         '''
@@ -166,7 +234,7 @@ class Framework(object):
 
     def ForceMatrix(self, L):
         N,M,d=self.V,self.E,self.dim
-        l = self.EdgeLengths()
+        l = self.L0
         deltaL = (l-L)/l
         vals = np.multiply(deltaL.reshape(M,-1),self.dr)
         vals = np.dot(self.K,vals)
@@ -193,7 +261,7 @@ class Framework(object):
         G = R.dot(Hinv.dot(RT))
         return G
 
-    def selfStress(self):
+    def SelfStress(self):
         '''Return states of self-stress (SSS).'''
         RT = self.RigidityMatrix().T
         u, s, vh = np.linalg.svd(RT)
@@ -201,7 +269,7 @@ class Framework(object):
         SSS = vh[-nullity:].T
         return SSS
 
-    def elasticModulus(self, strainMatrix):
+    def ElasticModulus(self, strainMatrix):
         '''Return the elastic modulus for the supplied strain matrix'''
         transformedBasis = np.multiply(strainMatrix, self.basis)
         transformedCoordinates = np.multiply(strainMatrix, self.coordinates)
@@ -221,16 +289,16 @@ class Framework(object):
         modulus = energy/(2*volume)
         return modulus
 
-    def bulk(self,eps=1e-6):
+    def BulkModulus(self,eps=1e-6):
         '''Returns the bulk modulus.'''
         strainMatrix = np.full((self.nbasis,), 1-eps)
-        bulk = self.elasticModulus(strainMatrix)/(eps*eps)
+        bulk = self.ElasticModulus(strainMatrix)/(eps*eps)
         return bulk
 
-    def shear(self,eps=1e-6):
+    def ShearModulus(self,eps=1e-6):
         '''Returns the bulk modulus.'''
         strainMatrix = np.empty((self.nbasis,))
         strainMatrix[::2] = 1-eps
         strainMatrix[1::2] = 1+eps
-        shear = self.elasticModulus(strainMatrix)/(eps*eps)
+        shear = self.ElasticModulus(strainMatrix)/(eps*eps)
         return shear

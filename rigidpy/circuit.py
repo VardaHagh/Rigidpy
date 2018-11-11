@@ -58,7 +58,7 @@ class Circuit(object):
         evalues, evectors = PF.Eigenspace(eigvals=(0,dim+1))
         nzeros = np.sum(evalues < 1e-14) # number of zero eigenvalues
         if nzeros > dim + 1:
-            print ('Warning: Rrigidity rank dropped!')
+            print ('Warning: Rigidity rank dropped!')
 
         # removing translations
         rhatSites = np.tile(np.eye(dim),N)
@@ -103,7 +103,7 @@ class Circuit(object):
             test = np.abs(np.vdot(direction,nextPoint['direction']))
         return nextPoint, nextBasis
 
-    def follow(self, stepsize=10**-3, iteration=10, radius=0.1,
+    def Follow(self, stepsize=10**-3, iteration=10, radius=0.1,
                      relaxStep=5, report=True, optimization=False,
                      lazySearch=False, kick=1):
         '''Follow the circuit.'''
@@ -165,6 +165,18 @@ class Circuit(object):
             print ('Total time={:<.4f} seconds'.format(totalTime))
         self.results = d
         return d
+
+    def DetectPassagePoints(self):
+        '''
+        This function determines if the volume of
+        of the cell returns to its original
+        length.
+        '''
+        lens = self.results['volume']
+        arr  = lens - lens[0]
+        # find when sign flips
+        mask = np.diff(np.sign(arr))!=0
+        return np.nonzero(mask)[0]
 
     def DotProduct(self,save=False,name=None):
         results = self.results
