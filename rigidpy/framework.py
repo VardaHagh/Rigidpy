@@ -79,8 +79,10 @@ class Framework(object):
         else:
             self.L0 = equlengths
 
-        '''Tension spring stiffness'''
-        self.tension = np.dot(self.K, norm(self.dr,axis=1) - self.L0)
+        '''Tension spring stiffness
+        by convention: compression has postive tension
+        '''
+        self.tension = np.dot(self.K, self.L0 - norm(self.dr,axis=1) )
         self.KP = np.diag(self.tension/self.L0)
 
     def EdgeLengths(self):
@@ -155,7 +157,7 @@ class Framework(object):
         H = np.dot(R.T, np.dot(self.KP, R))
         for i in range(self.dim):
             Raxis = self.RigidityMatrixAxis(i)
-            H += np.dot(Raxis.T, np.dot(self.KP, Raxis))
+            H -= np.dot(Raxis.T, np.dot(self.KP, Raxis))
         return H
 
     def HessianMatrix(self):
