@@ -4,7 +4,7 @@ import numpy as np
 from .framework import Framework
 import scipy.optimize as opt
 
-class Configuration(object):
+class configuration(object):
     '''
     takes in a strcuture, returns optimized structure
     '''
@@ -24,10 +24,15 @@ class Configuration(object):
         '''
         find energy of spring network
 
-        paramters
+        Paramters
         ---------
         L: rest length
         k : spring constant
+
+        Returns
+        -------
+        Energy of the network
+
         '''
         # The argument P is a vector (flattened matrix).We convert it to a matrix here.
         coordinates = P.reshape((-1, self.dim))
