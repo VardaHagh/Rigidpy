@@ -1,7 +1,7 @@
 from __future__ import division, print_function, absolute_import
 
 
-def circuit(coordinates, bonds, basis, mode, k=1, varcell=None):
+def Circuit(coordinates, bonds, basis, mode, k=1, varcell=None):
     """
 
     Set up a circuit
@@ -32,11 +32,11 @@ def circuit(coordinates, bonds, basis, mode, k=1, varcell=None):
     """
     if mode == "length":
         from .circuit_length import Circuit
-        circuit = circuit(coordinates, bonds, basis, k=k, varcell=None)
+        circuit = Circuit(coordinates, bonds, basis, k=k, varcell=None)
         return circuit
     elif mode == "volume":
         from .circuit_volume import Circuit
-        circuit = circuit(coordinates, bonds, basis, k=k, varcell=varcell)
+        circuit = Circuit(coordinates, bonds, basis, k=k, varcell=varcell)
         return circuit
     else:
         raise TypeError("You should provide a mode variable, possible values: 'length' and 'volume'.")

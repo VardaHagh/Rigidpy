@@ -8,7 +8,7 @@ from .framework import Framework
 from .configuration import Configuration
 import time
 
-class circuit(object):
+class Circuit(object):
     """
     Set up a circuit
 
