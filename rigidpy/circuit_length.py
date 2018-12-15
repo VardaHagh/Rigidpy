@@ -109,6 +109,7 @@ class Circuit(object):
              'basis':[], 'energy':[], 'nsteps': None,
              'stepsize': stepsize, 'time':None}
 
+        orignalCoordinates = self.coordinates
         p = np.copy(self.coordinates)
         bonds = self.bonds
         M = len(bonds)
@@ -184,9 +185,9 @@ class Circuit(object):
             is closer than a cutoff to initial point."""
 
             if i > 2:
-                dist1 = norm(d['coordinates'][-2]-coordinates)
-                dist2 = norm(d['coordinates'][-1]-coordinates)
-                dist3 = norm(p-coordinates)
+                dist1 = norm(d['coordinates'][-2]-orignalCoordinates)
+                dist2 = norm(d['coordinates'][-1]-orignalCoordinates)
+                dist3 = norm(p-orignalCoordinates)
                 turning = np.vdot(dist2-dist1,dist3-dist2)
                 if (i!=0) and turning<0 and dist2<radius:
                     print ("""Tracking stopped: The last point was closer than
