@@ -1,17 +1,17 @@
-from __future__ import division, print_function, absolute_import
+bondsfrom __future__ import division, print_function, absolute_import
 
 import numpy as np
 from .framework import Framework
 import scipy.optimize as opt
 
-class configuration(object):
+class Configuration(object):
     '''
     takes in a strcuture, returns optimized structure
     '''
-    def __init__(self, coordinates, edges, basis, k=1, dim=2):
+    def __init__(self, coordinates, bonds, basis, k=1, dim=2):
         self.dim = dim
         self.x0 = coordinates.ravel()
-        self.edges = edges
+        self.bonds = bonds
         self.basis = basis
         self.k = k
         self.initialenergy = 0
@@ -36,23 +36,23 @@ class configuration(object):
         '''
         # The argument P is a vector (flattened matrix).We convert it to a matrix here.
         coordinates = P.reshape((-1, self.dim))
-        PF = Framework(coordinates,self.edges,self.basis,self.k)
+        PF = Framework(coordinates,self.bonds,self.basis,self.k)
         self.framework = PF
-        lengths = PF.EdgeLengths() # length of all edges
+        lengths = PF.EdgeLengths() # length of all bonds
         self.lengths = lengths
         energy = 0.5 * np.sum(np.dot(PF.K,(lengths - L)**2))
         return energy
 
     def Forces(self, P, L):
         coordinates = P.reshape((-1, self.dim))
-        Ns,Nb = len(coordinates),len(self.edges)
+        Ns,Nb = len(coordinates),len(self.bonds)
         PF = self.framework
-        lengths = self.lengths # length of all edges
+        lengths = self.lengths # length of all bonds
         deltaL = (lengths-L)/lengths
         vals = np.multiply(deltaL.reshape(Nb,-1),PF.dr)
         vals = np.dot(PF.K,vals)
         Force = np.zeros((Ns,Ns,self.dim),float)
-        row,col = self.edges.T
+        row,col = self.bonds.T
         Force[row,col] = vals
         Force[col,row] = -vals
         return Force.sum(axis=1).reshape(-1,)
@@ -67,7 +67,7 @@ class configuration(object):
         return H
 
     def energy_minimize_Newton(self,L):
-        E = np.array(self.edges,int)
+        E = np.array(self.bonds,int)
         self.initialenergy =self.Energy(self.x0, L)
         report = opt.minimize(fun=self.Energy, x0=self.x0, args = (L),
                               method='Newton-CG', jac = self.Forces, hess=self.Hessian,
@@ -77,9 +77,9 @@ class configuration(object):
         P1 = report.x.reshape((-1, self.dim))
         return P1
 
-    """def energy_minimize_BFGS(self, coordinates, edges, a1, a2, L, k=1):
+    """def energy_minimize_BFGS(self, coordinates, bonds, a1, a2, L, k=1):
         P = np.array()
-        E = np.array(self.edges,int)
+        E = np.array(self.bonds,int)
         self.initialenergy =self.energy(P.ravel(), E, a1, a2, L, k)
         report = opt.minimize(self.energy, P.ravel(), args = (E, a1, a2, L, k), method='L-BFGS-B',
                           options={'disp': None, 'maxls': 20, 'iprint': -1,
