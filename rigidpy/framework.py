@@ -275,22 +275,20 @@ class Framework(object):
         return HS
 
     def eigenspace(self,eigvals=(0,4)):
-        '''
-        Returns sorted eigenvalues and eigenvectors of
-        total Hessian matrix.
-        '''
+        """Returns sorted eigenvalues and eigenvectors of
+        total Hessian matrix."""
         H = self.HessianMatrix()
         evalues, evectors = SLA.eigh(H,eigvals=eigvals)
         return evalues, evectors.T
 
-    def Eigenspace(self):
-        return self.eigenspace()
+    def Eigenspace(self, eigvals=(0,4)):
+        """Returns sorted eigenvalues and eigenvectors of
+        total Hessian matrix."""
+        return self.eigenspace(eigvals=eigvals)
 
     def eigenspaceSparse(self,eigvals=4,sigma=1e-12,which='LM',mode='normal'):
-        '''
-        sorted eigenvalues and eigenvectors
-        assumes the hessian is symmetric (by design)
-        '''
+        """sorted eigenvalues and eigenvectors
+        assumes the hessian is symmetric (by design)"""
         H = self.HessianMatrixSparse()
         evalues, evectors = eigsh(H,k=eigvals,sigma=sigma,which=which,mode=mode)
         args = np.argsort(np.abs(evalues))
