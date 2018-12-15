@@ -48,7 +48,7 @@ class Circuit(object):
         self.K = PF.K
         self.restlengths = PF.EdgeLengths()
         self.results = None
-        print ("within length circuit")
+        print ("Building a circuit by cutting a bond...")
 
     def point(self, coordinates, bonds, basis, k):
 

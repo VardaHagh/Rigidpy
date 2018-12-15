@@ -45,7 +45,7 @@ class Circuit(object):
         PF = Framework(coordinates, bonds, basis, k, varcell)
         self.restlengths = PF.EdgeLengths()
         self.results = None
-        print ("within volume circuit")
+        print ("Building a circuit by changing the volume...")
 
     def point(self, coordinates, bonds, basis):
 
