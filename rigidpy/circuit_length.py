@@ -176,6 +176,31 @@ class Circuit(object):
                 if i%relaxStep==0:
                     C = rp.Configuration(p, bondsAfterCut, basis, kAfterCut, dim)
                     p = C.energy_minimize_Newton(L)
+
+            """if path wants to repeat itself, break the loop.The
+            idea is to check when previous step gets closer to initial
+            point but next step gets far. This does happen only close
+            near starting point. In addition we check if the mid point
+            is closer than a cutoff to initial point."""
+
+            if i > 2:
+                dist1 = norm(d['coordinates'][-2]-coordinates)
+                dist2 = norm(d['coordinates'][-1]-coordinates)
+                dist3 = norm(p-coordinates)
+                turning = np.vdot(dist2-dist1,dist3-dist2)
+                if (i!=0) and turning<0 and dist2<radius:
+                    print ("""Tracking stopped: The last point was closer than
+                    radius from the starting point!""")
+                    break
+
+            if lazySearch:
+                passage = self.DetectPassagePoints(d['length'])
+                if len(passage)>1:
+                    print ('Tracking stopped: The first conjugate point is found!')
+                    break
+
+        if i+1 == iteration:
+            print ('Tracking stopped: Maximum number of iterations is used!')
         d['nsteps'] = i+1
         timef=time.time()
         totalTime = timef-timei
@@ -185,22 +210,46 @@ class Circuit(object):
         self.results = d
         return d
 
-    def DetectPassagePoints(self):
+    def DetectPassagePoints(self, lengths=None):
         '''
         This function determines if the volume of
         of the cell returns to its original
         length.
         '''
-        lens = self.results['volume']
+        if lengths is None:
+            lens = self.results['length']
+        else:
+            lens = lengths
         arr  = lens - lens[0]
         # find when sign flips
         mask = np.diff(np.sign(arr))!=0
         return np.nonzero(mask)[0]
 
-    def DotProduct(self,save=False,name=None):
+    def CircuitRealization(self,save=False,name=None,sample=1):
+        results = self.results
+        datax,datay=results['length'],results['distance']
+
+        fig, ax = plt.subplots(1,1,figsize=(6,6))
+        ax.ticklabel_format(useOffset=False)
+        ax.set_ylabel('Average Distance from Center of Mass')
+        ax.set_xlabel('Length of the removed edge')
+        ax.plot(datax,datay,'-',color='k',zorder=1)
+        ax.scatter(datax[0],datay[0],marker='*',color='r',zorder=2,s=200)
+        plt.tight_layout()
+        if save:
+            plt.savefig(name,dpi=100)
+            plt.close()
+        else:
+            return plt.show(fig)
+
+    def PlotRealization(self,save=False,name=None):
+        return self.CircuitRealization(save=save,name=name)
+
+    def DotProduct(self,save=False,name=None,sample=1):
+        """
+        """
         results = self.results
         nsteps = results['nsteps']
-        results
         m,n = results['coordinates'][0].shape
         P = np.array(results['coordinates']).reshape(-1,m*n)
         T_diff = P[1:] - P[:-1]
