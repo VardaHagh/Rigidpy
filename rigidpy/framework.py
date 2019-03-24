@@ -55,18 +55,17 @@ class Framework(object):
 
     Examples
     --------
+    ```python
     >>> import numpy as np
     >>> import rigidpy as rp
-    >>> coordinates = np.array([[-1,0], [0,0], [1,0], [0,-1]])
-    >>> bonds = np.array([[0,1],[1,2],[1,3]])
+    >>> coordinates = np.array([[-1,0], [1,0], [0,1]])
+    >>> bonds = np.array([[0,1],[1,2],[0,2]])
     >>> basis = [[0,0],[0,0]]
-    >>> pins = [0,2,3]
+    >>> pins = [0]
     >>> F = rp.Framework(coordinates, bonds, basis=basis, pins=pins)
-    >>> F.RigidityMatrix()
-    >>> np.loadtxt(c)
-    array([ [ 1., -0.],
-            [-1.,  0.],
-            [ 0.,  1.]])
+    >>> print ("rigidity matrix:\n",F.RigidityMatrix())
+    >>> eigvals, eigvecs = F.Eigenspace(eigvals=(0,3))
+    >>> print("vibrational eigenvalues:\n",eigvals)
     '''
 
     def __init__(self, coordinates, bonds, basis=None, pins=None, k=1, equlengths=None, mass=1, varcell=None):
