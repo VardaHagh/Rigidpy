@@ -11,8 +11,7 @@ tools to find different realizations of a graph for a given topology.
 ### Example
 
 <div align="center">
-    <img src="https://cdn1.imggmi.com/uploads/2019/3/24/f883d404681902c936ad58d4f57b7036-full.png
-"</img> 
+    <img src="https://cdn1.imggmi.com/uploads/2019/3/24/f883d404681902c936ad58d4f57b7036-full.png"</img> 
 </div>
 
 ```python
