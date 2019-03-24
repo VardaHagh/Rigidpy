@@ -36,7 +36,7 @@ class Configuration(object):
         '''
         # The argument P is a vector (flattened matrix).We convert it to a matrix here.
         coordinates = P.reshape((-1, self.dim))
-        PF = Framework(coordinates,self.bonds,self.basis,self.k)
+        PF = Framework(coordinates,self.bonds,basis=self.basis,k=self.k)
         self.framework = PF
         lengths = PF.EdgeLengths() # length of all bonds
         self.lengths = lengths

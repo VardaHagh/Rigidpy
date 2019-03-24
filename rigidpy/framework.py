@@ -1,13 +1,10 @@
 from __future__ import division, print_function, absolute_import
 
 import numpy as np
-import scipy.linalg as SLA
-from scipy.linalg import qr
 from scipy.sparse import csr_matrix
-from scipy.sparse.linalg import eigsh,cg,inv
+from scipy.sparse.linalg import eigsh, cg, inv
 from scipy.spatial.distance import cdist
-from scipy.sparse import csr_matrix
-from numpy.linalg import norm
+from numpy.linalg import norm, eig, qr, eigh
 from itertools import product
 
 class Framework(object):
@@ -28,9 +25,15 @@ class Framework(object):
     basis: (d,d) array, optional
         List of basis/repeat/lattice vectors, Default: ``None``.
         If ``None`` or array of zero vectors, the system is assumed to be finite.
+    pins: array/list of int, optional
+        List of sites to be immobilized.
     k: int/float or array of int/floats, optional
         Spring constant/stiffness. Default: `1`.
         If an array is supplied, the shape should be ``(M,2)``.
+    equlengths: int/float or array of int/floats, optional
+        Equilibrium/rest length of bonds, used for systems with pre-stress.
+    mass: int/float or array of int/floats, optional
+        Mass of sites. Default: `1`.
     varcell: (d*d,) array of booleans/int
         A list of basis vector components allowed to change (1/True) or
         fixed (0/False). Example: ``[0,1,0,0]`` or ``[False, True, False, False]``
@@ -44,7 +47,7 @@ class Framework(object):
 
     See Also
     --------
-    load, fromstring, fromregex
+    Configuration
 
     Notes
     -----
@@ -52,45 +55,65 @@ class Framework(object):
 
     Examples
     --------
-    >>> from io import StringIO   # StringIO behaves like a file object
-    >>> c = StringIO("0 1\\n2 3")
+    >>> import numpy as np
+    >>> import rigidpy as rp
+    >>> coordinates = np.array([[-1,0], [0,0], [1,0], [0,-1]])
+    >>> bonds = np.array([[0,1],[1,2],[1,3]])
+    >>> basis = [[0,0],[0,0]]
+    >>> pins = [0,2,3]
+    >>> F = rp.Framework(coordinates, bonds, basis=basis, pins=pins)
+    >>> F.RigidityMatrix()
     >>> np.loadtxt(c)
-    array([[ 0.,  1.],
-           [ 2.,  3.]])
-    >>> d = StringIO("M 21 72\\nF 35 58")
-    >>> np.loadtxt(d, dtype={'names': ('gender', 'age', 'weight'),
-    ...                      'formats': ('S1', 'i4', 'f4')})
-    array([('M', 21, 72.0), ('F', 35, 58.0)],
-          dtype=[('gender', '|S1'), ('age', '<i4'), ('weight', '<f4')])
-    >>> c = StringIO("1,0,2\\n3,0,4")
-    >>> x, y = np.loadtxt(c, delimiter=',', usecols=(0, 2), unpack=True)
-    >>> x
-    array([ 1.,  3.])
-    >>> y
-    array([ 2.,  4.])
+    array([ [ 1., -0.],
+            [-1.,  0.],
+            [ 0.,  1.]])
     '''
 
-    def __init__(self, coordinates, bonds, basis, k=1, equlengths=None, varcell=None):
+    def __init__(self, coordinates, bonds, basis=None, pins=None, k=1, equlengths=None, mass=1, varcell=None):
 
-        '''Number of sites and spatial dimensions'''
-        self.V, self.dim = coordinates.shape
-        self.coordinates = coordinates
+        # Number of sites and spatial dimensions
+        self.coordinates = np.array(coordinates)
+        self.N, self.dim = self.coordinates.shape
 
-        '''Number of bonds and bond list'''
-        self.E, self.C = bonds.shape
-        self.bonds = bonds
+        # Number of bonds and bond list
+        self.bonds = np.array(bonds)
+        self.E, self.C = self.bonds.shape
 
-        '''Basis vectors and their norms'''
-        self.basis = basis
+        # Basis vectors and their norms
+        if basis is None:
+            basis = np.zeros(shape=(self.dim,self.dim))
+            self.boundary = 'free'
+        else:
+            self.basis = basis
+            self.boundary = 'periodic'
         self.nbasis = nbasis = len(basis) # number of basis vectors
         self.basisNorm = np.array([norm(base) for base in basis])
         self.cutoff = 0.5*np.amin(self.basisNorm)
 
-        '''whether cell can deform'''
+        if pins is None:
+            self.pins = []
+        else:
+            self.pins = pins
+            # update the boundary conditions
+            if self.boundary=='periodic':
+                self.boundary='periodic+pinned'
+            else:
+                self.boundary='anchored'
+
+        # index of pinned and non-pinned sites in rigidity matrix
+        dim_idx = np.arange(0,self.dim)
+        if len(self.pins)!=0:
+            self.pins_idx = [pin*self.dim+dim_idx for pin in self.pins]
+            self.keep_idx = np.setdiff1d(np.arange(0,self.dim*self.N), self.pins_idx)
+
+        # whether cell can deform
         self.varcell = varcell
 
-        '''volume of the box/cell'''
-        self.volume = np.abs(np.product(np.linalg.eig(basis)[0]))
+        # volume of the box/cell
+        if nbasis == 1:
+            self.volume = self.basisNorm
+        else:
+            self.volume = np.abs(np.product(eig(basis)[0]))
 
         # froce constant matrix
         if isinstance(k, (int, float)):
@@ -99,11 +122,11 @@ class Framework(object):
             self.K = np.diagflat(k)
         self.KS = csr_matrix(self.K) #sparse spring constants
 
-        '''Cartesian product for periodic box'''
+        # Cartesian product for periodic box
         regionIndex = np.array(list(product([-1,0,1], repeat=nbasis)))
         transVectors = np.einsum('ij,jk->ik',regionIndex,basis)
 
-        '''Identify long bonds'''
+        # Identify long bonds
         if self.C not in [2,3]:
             raise ValueError('Second dimension should be 2 or 3.')
         elif self.C is 2:
@@ -128,40 +151,26 @@ class Framework(object):
             #indexLong = np.nonzero(lengths > self.cutoff)
             # feature for future release
 
-        '''Equilibrium or rest length of springs'''
+        # Equilibrium or rest length of springs
         if equlengths is None:
             self.L0 = norm(self.dr,axis=1)
         else:
             self.L0 = equlengths
 
-        """Tension spring stiffness
-        by convention: compression has postive tension"""
+        # Tension spring stiffness
+        # by convention: compression has postive tension
         self.tension = np.dot(self.K, self.L0 - norm(self.dr,axis=1) )
         self.KP = np.diag(self.tension/self.L0)
 
-    def edgeLengths(self):
-        """Computes the length of all bonds."""
+    def EdgeLengths(self):
+        """Compute the length of all bonds."""
         return norm(self.dr,axis=1)
 
-    def EdgeLengths(self):
-        """Computes the length of all bonds."""
-        return self.edgeLengths()
-
-    def BondLengths(self):
-        """Computes the length of all bonds."""
-        return self.edgeLengths()
-
-    def bondLengths(self):
-        """Computes the length of all bonds."""
-        return self.edgeLengths()
-
-    def rigidityMatrixStable(self):
+    def RigidityMatrixStable(self):
         """Calculate rigidity matrix of the graph.
         Elements are normalized position difference of connected
-        coordinates.
-        Make sure edge list, first element < second element"""
-        #self.dr
-        N,M=self.V,self.E
+        coordinates."""
+        N,M,d=self.N,self.E,self.dim
         drNorm = self.L0[:,np.newaxis]
         dr = self.dr/drNorm # normalized dr
         # find row and col for non zero values
@@ -173,7 +182,7 @@ class Framework(object):
         R = R.reshape(M,-1)
 
         if self.varcell is not None:
-            conditions = np.array(self.varcell,dtype=bool)
+            conditions = np.array(self.varcell, dtype=bool)
             #cellDim = np.sum(conditions!=0)
             #RCell = np.zeros([M,cellDim])
             #print(RCell)
@@ -183,19 +192,19 @@ class Framework(object):
             RCell = RCell.reshape(M,-1)
             # select only specified components
             RCell = RCell[:, conditions]
-            R = np.append(R,RCell,axis=1)
+            R = np.append(R, RCell,axis=1)
+
+        if len(self.pins)!=0:
+            return R[:, self.keep_idx]
 
         return R
 
-    def RigidityMatrixStable(self):
-        return self.rigidityMatrixStable()
-
-    def rigidityMatrixAxis(self, i):
+    def RigidityMatrixAxis(self, i):
         '''
         Calculate rigidity matrix of the graph along an axis
         in d dimensions. Elements are unit vectors.
         '''
-        N,M=self.V,self.E
+        N,M,d=self.N,self.E,self.dim
         row = np.repeat(np.arange(M),2)
         col = self.bonds.reshape(-1)
         dr = np.repeat([np.eye(self.dim)[i]],M,axis=0)
@@ -203,32 +212,40 @@ class Framework(object):
         R = np.zeros([M,N,self.dim])
         R[row,col]=val
         R = R.reshape(M,-1)
+
+        if self.varcell is not None:
+            conditions = np.array(self.varcell, dtype=bool)
+            RCell = np.zeros([M,self.nbasis,self.dim])
+            valsCell = np.einsum('ij,ik->ijk',self.mn,dr[self.indexLong])
+            RCell[self.indexLong] = valsCell
+            RCell = RCell.reshape(M,-1)
+            # select only specified components
+            RCell = RCell[:, conditions]
+            R = np.append(R, RCell,axis=1)
+
+        if len(self.pins)!=0:
+            return R[:, self.keep_idx]
+
         return R
 
-    def RigidityMatrixAxis(self, i):
-        return self.rigidityMatrixAxis(i)
-
-    def rigidityMatrix(self):
+    def RigidityMatrix(self):
         '''
         Calculate rigidity matrix of the graph. For now, it simply returns
         stable rigidity matrix.
+
+        .. todolist::
+            Update the function to include the second-order term, if required.
         '''
         R = self.RigidityMatrixStable()
         return R
 
-    def RigidityMatrix(self):
-        return self.rigidityMatrix()
-
-    def hessianMatrixStable(self):
+    def HessianMatrixStable(self):
         '''calculate stable Hessian.'''
         R = self.RigidityMatrixStable()
         H = np.dot(R.T, np.dot(self.K, R))
         return H
 
-    def HessianMatrixStable(self):
-        return self.hessianMatrixStable()
-
-    def hessianMatrixDestable(self):
+    def HessianMatrixDestable(self):
         '''calculate destable Hessian.'''
         KP = self.KP
         R = self.RigidityMatrixStable()
@@ -238,21 +255,15 @@ class Framework(object):
             H -= np.dot(Raxis.T, np.dot(KP, Raxis))
         return H
 
-    def HessianMatrixDestable(self):
-        return self.hessianMatrixDestable()
-
-    def hessianMatrix(self):
+    def HessianMatrix(self):
         '''calculate total Hessian = stable + unstable'''
         Hstable = self.HessianMatrixStable()
         Hdestable = self.HessianMatrixDestable()
         Htotal = Hstable + Hdestable
         return Htotal
 
-    def HessianMatrix(self):
-        return self.hessianMatrix()
-
-    def rigidityMatrixSparse(self):
-        N,M,d=self.V,self.E,self.dim
+    def __RigidityMatrixSparse(self):
+        N,M,d=self.N,self.E,self.dim
         drNorm = self.L0[:,np.newaxis]
         dr = self.dr/drNorm # normalized dr
         row = np.repeat(np.arange(M),2*d)
@@ -264,7 +275,7 @@ class Framework(object):
         R = csr_matrix((val,(row,col)), shape=(M,N*d))
         return R
 
-    def hessianMatrixSparse(self):
+    def __HessianMatrixSparse(self):
         '''
         calculate Hessian or dynamical matrix
         Shape is (dim*V-P) by (dim*V-P).
@@ -274,31 +285,46 @@ class Framework(object):
         HS = RST.dot((self.KS).dot(RS))
         return HS
 
-    def eigenspace(self,eigvals=(0,4)):
+    def Eigenspace(self,eigvals=(0,4)):
         """Returns sorted eigenvalues and eigenvectors of
-        total Hessian matrix."""
+        total Hessian matrix.
+
+        Parameters
+        ----------
+        eigvals: tuple
+            Index of eigenvalues to be returned.
+            Default: `(0,4)` equivalent to first 5 eigenvalues.
+
+        Returns
+        -------
+        eigval, eigvecs:
+            Eigenvalues and eigenvectors.
+        """
+
         H = self.HessianMatrix()
-        evalues, evectors = SLA.eigh(H,eigvals=eigvals)
+        evalues, evectors = eigh(H,eigvals=eigvals)
+
+        """if self.pins:
+            evectors = np.insert(arr=evectors, obj=np.ravel(self.pins_idx),
+                                values=0, axis=0)"""
+
         return evalues, evectors.T
 
-    def Eigenspace(self, eigvals=(0,4)):
-        """Returns sorted eigenvalues and eigenvectors of
-        total Hessian matrix."""
-        return self.eigenspace(eigvals=eigvals)
-
-    def eigenspaceSparse(self,eigvals=4,sigma=1e-12,which='LM',mode='normal'):
-        """sorted eigenvalues and eigenvectors
-        assumes the hessian is symmetric (by design)"""
+    def __EigenspaceSparse(self,eigvals=4,sigma=1e-12,which='LM',mode='normal'):
+        """
+        sorted eigenvalues and eigenvectors
+        assumes the hessian is symmetric (by design)
+        """
         H = self.HessianMatrixSparse()
         evalues, evectors = eigsh(H,k=eigvals,sigma=sigma,which=which,mode=mode)
         args = np.argsort(np.abs(evalues))
         return evalues[args], evectors.T[args]
 
-    def EigenspaceSparse(self):
-        return self.eigenspaceSparse()
-
-    def forceMatrix(self, L):
-        N,M,d=self.V,self.E,self.dim
+    def ForceMatrix(self, L):
+        """
+        A force matrix showing the tension in each bond
+        """
+        N,M,d=self.N,self.E,self.dim
         l = self.L0
         deltaL = (l-L)/l
         vals = np.multiply(deltaL.reshape(M,-1),self.dr)
@@ -310,7 +336,19 @@ class Framework(object):
         Force[col,row] = -vals
         return Force
 
-    def couplingMatrix(self):
+    def ForceAlongBond(self, bondId, forceScale = 1e-2):
+        """
+        Generate a force along the bond with index equal to `BondId` with
+        the norm equal to `forceScale`.
+        """
+        N,d = self.N, self.dim
+        Fext = np.zeros([N,d])
+        e0, e1 = self.bonds[bondId]
+        forceVector = forceScale*self.dr[bondId]
+        Fext[e0], Fext[e1] = forceVector, -forceVector
+        return Fext.reshape(-1,)
+
+    def CouplingMatrix(self):
         H = self.HessianMatrix()
         Hinv = np.linalg.pinv(H)
         R = self.RigidityMatrix()
@@ -318,7 +356,7 @@ class Framework(object):
         G = np.dot(R,np.dot(Hinv,RT))
         return G
 
-    def couplingMatrixSparse(self):
+    def __CouplingMatrixSparse(self):
         H = self.HessianMatrixSparse()
         Hinv = inv(H)
         R = self.RigidityMatrixSparse()
@@ -326,7 +364,7 @@ class Framework(object):
         G = R.dot(Hinv.dot(RT))
         return G
 
-    def selfStress(self):
+    def SelfStress(self):
         '''Return states of self-stress (SSS).'''
         RT = self.RigidityMatrix().T
         u, s, vh = np.linalg.svd(RT)
@@ -334,7 +372,7 @@ class Framework(object):
         SSS = vh[-nullity:].T
         return SSS
 
-    def elasticModulus(self, strainMatrix):
+    def ElasticModulus(self, strainMatrix):
         """Return the elastic modulus for the supplied strain matrix
 
         In ``d`` dimensions, the strain matrix is a ``(d,d)`` array. To compute
@@ -350,27 +388,27 @@ class Framework(object):
         R = self.RigidityMatrix()
         RT = R.T
 
-        F2 = Framework(transformedCoordinates, self.bonds, transformedBasis, np.diag(K))
+        F2 = Framework(transformedCoordinates, self.bonds, basis=transformedBasis, k=np.diag(K))
         dl = F2.EdgeLengths() - self.EdgeLengths()
         Force = -np.dot(RT,K.dot(dl))
         u = np.linalg.lstsq(H,Force,rcond=-1)
         Dl = np.dot(R,u[0])
         energy = 0.5 * np.sum(np.dot(K,(Dl + dl)**2))
-        modulus = energy/(2*volume)
+        modulus = energy/volume
         return modulus
 
-    def bulkModulus(self,eps=1e-6):
+    def BulkModulus(self,eps=1e-6):
         """Returns the bulk modulus."""
         strainArray = np.full((self.nbasis,), 1-eps)
         strainMatrix = np.diag(strainArray)
-        bulk = self.elasticModulus(strainMatrix)/(eps*eps)
+        bulk = self.ElasticModulus(strainMatrix)/(2*eps*eps)
         return bulk
 
-    def shearModulus(self,eps=1e-6):
+    def ShearModulus(self,eps=1e-6):
         """Returns the shear modulus."""
         strainArray = np.empty((self.nbasis,))
         strainArray[::2] = 1-eps
         strainArray[1::2] = 1+eps
         strainMatrix = np.diag(strainArray)
-        shear = self.elasticModulus(strainMatrix)/(eps*eps)
+        shear = self.ElasticModulus(strainMatrix)/(2*eps*eps)
         return shear

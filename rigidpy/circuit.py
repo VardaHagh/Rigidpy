@@ -31,12 +31,12 @@ def Circuit(coordinates, bonds, basis, mode, k=1, varcell=None):
     A circuit object based on the selected mode.
     """
     if mode == "length":
-        from .circuit_length import Circuit
-        circuit = Circuit(coordinates, bonds, basis, k=k, varcell=None)
+        from .circuit_length import circuit_length
+        circuit = circuit_length(coordinates, bonds, basis, k=k, varcell=None)
         return circuit
     elif mode == "volume":
-        from .circuit_volume import Circuit
-        circuit = Circuit(coordinates, bonds, basis, k=k, varcell=varcell)
+        from .circuit_volume import circuit_volume
+        circuit = circuit_volume(coordinates, bonds, basis, k=k, varcell=varcell)
         return circuit
     else:
         raise TypeError("You should provide a mode variable, possible values: 'length' and 'volume'.")

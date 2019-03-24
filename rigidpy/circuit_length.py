@@ -8,7 +8,7 @@ from .framework import Framework
 from .configuration import Configuration
 import time
 
-class Circuit(object):
+class circuit_length(object):
     """Set up a circuit
 
     Parameters
@@ -44,7 +44,7 @@ class Circuit(object):
         self.varcell = varcell
         self.k = k
         self.center = np.mean(coordinates, axis=0) #center of mass
-        PF = Framework(coordinates, bonds, basis, k, varcell)
+        PF = Framework(coordinates, bonds, basis=basis, k=k, varcell=varcell)
         self.K = PF.K
         self.restlengths = PF.EdgeLengths()
         self.results = None
@@ -226,7 +226,7 @@ class Circuit(object):
         mask = np.diff(np.sign(arr))!=0
         return np.nonzero(mask)[0]
 
-    def CircuitRealization(self,save=False,name=None,sample=1):
+    def CircuitRealization(self,save=False,name=None,sample=1,**kwds):
         results = self.results
         datax,datay=results['length'],results['distance']
 
@@ -234,8 +234,8 @@ class Circuit(object):
         ax.ticklabel_format(useOffset=False)
         ax.set_ylabel('Average Distance from Center of Mass')
         ax.set_xlabel('Length of the removed edge')
-        ax.plot(datax,datay,'-',color='k',zorder=1)
-        ax.scatter(datax[0],datay[0],marker='*',color='r',zorder=2,s=200)
+        ax.plot(datax,datay,'-',color='k',zorder=1,**kwds)
+        ax.scatter(datax[0],datay[0],marker='*',color='r',zorder=2,s=200,**kwds)
         plt.tight_layout()
         if save:
             plt.savefig(name,dpi=100)
@@ -243,10 +243,10 @@ class Circuit(object):
         else:
             return plt.show(fig)
 
-    def PlotRealization(self,save=False,name=None):
-        return self.CircuitRealization(save=save,name=name)
+    def PlotRealization(self,save=False,name=None,**kwds):
+        return self.CircuitRealization(save=save,name=name,**kwds)
 
-    def DotProduct(self,save=False,name=None,sample=1):
+    def DotProduct(self,save=False,name=None,sample=1,**kwds):
         """
         """
         results = self.results

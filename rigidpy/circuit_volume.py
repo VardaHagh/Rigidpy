@@ -8,7 +8,7 @@ from .framework import Framework
 from .configuration import Configuration
 import time
 
-class Circuit(object):
+class circuit_volume(object):
     """
     Set up a circuit
 
@@ -42,7 +42,8 @@ class Circuit(object):
         self.varcell = varcell
         self.k = k
         self.center = np.mean(coordinates, axis=0) #center of mass
-        PF = Framework(coordinates, bonds, basis, k, varcell)
+        PF = Framework(coordinates, bonds, basis=basis, k=k, varcell=varcell)
+        self.K = PF.K
         self.restlengths = PF.EdgeLengths()
         self.results = None
         print ("Building a circuit by changing the volume...")
@@ -56,7 +57,7 @@ class Circuit(object):
         nchange = self.nchange
 
         '''create a framework, currently works only for 2D'''
-        PF = Framework(coordinates, bonds, basis, self.k, self.varcell)
+        PF = Framework(coordinates, bonds, basis=basis, k=self.k, varcell=self.varcell)
         evalues, evectors = PF.Eigenspace(eigvals=(0,dim+1))
         nzeros = np.sum(evalues < 1e-14) # number of zero eigenvalues
         if nzeros > dim + 1:
@@ -156,8 +157,8 @@ class Circuit(object):
 
             if optimization and i!=0:
                 if i%relaxStep==0:
-                    C = rp.Configuration(p, bonds, basis, k, dim)
-                    p = C.energy_minimize_Newton(L)
+                    C = Configuration(p, bonds, basis, self.K, dim)
+                    p = C.energy_minimize_Newton(self.restlengths)
         d['nsteps'] = i+1
         timef=time.time()
         totalTime = timef-timei
