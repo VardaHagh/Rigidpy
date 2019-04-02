@@ -60,10 +60,7 @@ class Configuration(object):
     def Hessian(self, P, L):
         coordinates = P.reshape((-1, self.dim))
         PF = self.framework
-        if len(P)>100:
-            H = PF.HessianMatrixSparse().todense()
-        else:
-            H = PF.HessianMatrix()
+        H = PF.HessianMatrix()
         return H
 
     def energy_minimize_Newton(self,L):

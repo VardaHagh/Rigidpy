@@ -4,7 +4,8 @@ import numpy as np
 from scipy.sparse import csr_matrix
 from scipy.sparse.linalg import eigsh, cg, inv
 from scipy.spatial.distance import cdist
-from numpy.linalg import norm, eig, qr, eigh
+from numpy.linalg import norm, eig, qr
+from scipy.linalg import eigh
 from itertools import product
 
 class Framework(object):
@@ -76,7 +77,7 @@ class Framework(object):
 
         # Number of bonds and bond list
         self.bonds = np.array(bonds)
-        self.E, self.C = self.bonds.shape
+        self.NB, self.C = self.bonds.shape
 
         # Basis vectors and their norms
         if basis is None:
@@ -110,13 +111,18 @@ class Framework(object):
 
         # volume of the box/cell
         if nbasis == 1:
+            # in case system is 1D
             self.volume = self.basisNorm
         else:
-            self.volume = np.abs(np.product(eig(basis)[0]))
+            volume = np.abs(np.product(eig(basis)[0]))
+            if volume:
+                self.volume = volume
+            else:
+                self.volume = 1
 
         # froce constant matrix
         if isinstance(k, (int, float)):
-            self.K = np.diagflat(k*np.ones(self.E))
+            self.K = np.diagflat(k*np.ones(self.NB))
         else:
             self.K = np.diagflat(k)
         self.KS = csr_matrix(self.K) #sparse spring constants
@@ -169,7 +175,7 @@ class Framework(object):
         """Calculate rigidity matrix of the graph.
         Elements are normalized position difference of connected
         coordinates."""
-        N,M,d=self.N,self.E,self.dim
+        N,M,d=self.N,self.NB,self.dim
         drNorm = self.L0[:,np.newaxis]
         dr = self.dr/drNorm # normalized dr
         # find row and col for non zero values
@@ -203,7 +209,7 @@ class Framework(object):
         Calculate rigidity matrix of the graph along an axis
         in d dimensions. Elements are unit vectors.
         '''
-        N,M,d=self.N,self.E,self.dim
+        N,M,d=self.N,self.NB,self.dim
         row = np.repeat(np.arange(M),2)
         col = self.bonds.reshape(-1)
         dr = np.repeat([np.eye(self.dim)[i]],M,axis=0)
@@ -262,7 +268,7 @@ class Framework(object):
         return Htotal
 
     def __RigidityMatrixSparse(self):
-        N,M,d=self.N,self.E,self.dim
+        N,M,d=self.N,self.NB,self.dim
         drNorm = self.L0[:,np.newaxis]
         dr = self.dr/drNorm # normalized dr
         row = np.repeat(np.arange(M),2*d)
@@ -323,7 +329,7 @@ class Framework(object):
         """
         A force matrix showing the tension in each bond
         """
-        N,M,d=self.N,self.E,self.dim
+        N,M,d=self.N,self.NB,self.dim
         l = self.L0
         deltaL = (l-L)/l
         vals = np.multiply(deltaL.reshape(M,-1),self.dr)
@@ -367,7 +373,7 @@ class Framework(object):
         '''Return states of self-stress (SSS).'''
         RT = self.RigidityMatrix().T
         u, s, vh = np.linalg.svd(RT)
-        nullity = self.E - np.sum(s>1e-10)
+        nullity = self.NB - np.sum(s>1e-10)
         SSS = vh[-nullity:].T
         return SSS
 
