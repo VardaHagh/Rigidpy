@@ -31,7 +31,7 @@ class Framework(object):
     k: int/float or array of int/floats, optional
         Spring constant/stiffness. Default: `1`.
         If an array is supplied, the shape should be ``(M,2)``.
-    equlengths: int/float or array of int/floats, optional
+    restlengths: int/float or array of int/floats, optional
         Equilibrium/rest length of bonds, used for systems with pre-stress.
     mass: int/float or array of int/floats, optional
         Mass of sites. Default: `1`.
@@ -69,7 +69,7 @@ class Framework(object):
     >>> print("vibrational eigenvalues:\n",eigvals)
     '''
 
-    def __init__(self, coordinates, bonds, basis=None, pins=None, k=1, equlengths=None, mass=1, varcell=None):
+    def __init__(self, coordinates, bonds, basis=None, pins=None, k=1, restlengths=None, mass=1, varcell=None):
 
         # Number of sites and spatial dimensions
         self.coordinates = np.array(coordinates)
@@ -157,10 +157,10 @@ class Framework(object):
             # feature for future release
 
         # Equilibrium or rest length of springs
-        if equlengths is None:
+        if restlengths is None:
             self.L0 = norm(self.dr,axis=1)
         else:
-            self.L0 = equlengths
+            self.L0 = restlengths
 
         # Tension spring stiffness
         # by convention: compression has postive tension
