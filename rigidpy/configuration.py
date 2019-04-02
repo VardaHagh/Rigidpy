@@ -68,7 +68,7 @@ class Configuration(object):
     def energy_minimize_Newton(self, L, equlengths):
         E = np.array(self.bonds,int)
         self.initialenergy =self.Energy(self.x0, L, equlengths)
-        report = opt.minimize(fun=self.Energy, x0=self.x0, args = (L),
+        report = opt.minimize(fun=self.Energy, x0=self.x0, args = (L, equlengths),
                               method='Newton-CG', jac = self.Forces, hess=self.Hessian,
                               options={'disp': False, 'xtol': 1e-7,'return_all': False, 'maxiter': None})
         self.report = report
