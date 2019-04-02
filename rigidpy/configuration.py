@@ -20,7 +20,7 @@ class Configuration(object):
         self.framework = None
         self.lengths = None
 
-    def Energy(self, P, L):
+    def Energy(self, P, L, equlengths):
         '''
         find energy of spring network
 
@@ -28,6 +28,8 @@ class Configuration(object):
         ---------
         L: rest length
         k : spring constant
+        equlengths: equilengths
+
 
         Returns
         -------
@@ -36,14 +38,14 @@ class Configuration(object):
         '''
         # The argument P is a vector (flattened matrix).We convert it to a matrix here.
         coordinates = P.reshape((-1, self.dim))
-        PF = Framework(coordinates,self.bonds,basis=self.basis,k=self.k)
+        PF = Framework(coordinates,self.bonds,basis=self.basis,k=self.k, equlengths=L)
         self.framework = PF
         lengths = PF.EdgeLengths() # length of all bonds
         self.lengths = lengths
         energy = 0.5 * np.sum(np.dot(PF.K,(lengths - L)**2))
         return energy
 
-    def Forces(self, P, L):
+    def Forces(self, P, L, equlengths):
         coordinates = P.reshape((-1, self.dim))
         Ns,Nb = len(coordinates),len(self.bonds)
         PF = self.framework
@@ -57,15 +59,15 @@ class Configuration(object):
         Force[col,row] = -vals
         return Force.sum(axis=1).reshape(-1,)
 
-    def Hessian(self, P, L):
+    def Hessian(self, P, L, equlengths):
         coordinates = P.reshape((-1, self.dim))
         PF = self.framework
         H = PF.HessianMatrix()
         return H
 
-    def energy_minimize_Newton(self,L):
+    def energy_minimize_Newton(self, L, equlengths):
         E = np.array(self.bonds,int)
-        self.initialenergy =self.Energy(self.x0, L)
+        self.initialenergy =self.Energy(self.x0, L, equlengths)
         report = opt.minimize(fun=self.Energy, x0=self.x0, args = (L),
                               method='Newton-CG', jac = self.Forces, hess=self.Hessian,
                               options={'disp': False, 'xtol': 1e-7,'return_all': False, 'maxiter': None})
