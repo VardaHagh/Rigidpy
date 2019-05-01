@@ -40,6 +40,11 @@ class Framework(object):
         fixed (0/False). Example: ``[0,1,0,0]`` or ``[False, True, False, False]``
         both mean that in two dimensions, only second element of first
         basis vector is allowed to change.
+    power: int or float
+        Power of potential energy. power=2 is Hookean, power=5/2 is Hertzian. For
+        non-Hookean potentials, make sure to supply restlengths non-equal to the
+        current length of the bonds, otherwise the calculations will be wrong.
+        Default: 2
 
     Returns
     -------
@@ -69,7 +74,7 @@ class Framework(object):
     >>> print("vibrational eigenvalues:\n",eigvals)
     '''
 
-    def __init__(self, coordinates, bonds, basis=None, pins=None, k=1, restlengths=None, mass=1, varcell=None):
+    def __init__(self, coordinates, bonds, basis=None, pins=None, k=1, restlengths=None, mass=1, varcell=None, power=2):
 
         # Number of sites and spatial dimensions
         self.coordinates = np.array(coordinates)
@@ -164,8 +169,15 @@ class Framework(object):
 
         # Tension spring stiffness
         # by convention: compression has postive tension
-        self.tension = np.dot(self.K, self.L0 - norm(self.dr,axis=1) )
+        seperation_norm = self.L0 - norm(self.dr,axis=1)
+        self.tension = power * np.dot(self.K, seperation_norm**(power-1))
         self.KP = np.diag(self.tension/self.L0)
+
+        ### effective stiffness to use in non-Hookean cases
+        if power == 2:
+            self.Ke = self.K
+        else:
+            self.Ke = np.diag(np.dot(self.K, seperation_norm**(power-2)))
 
     def EdgeLengths(self):
         """Compute the length of all bonds."""
