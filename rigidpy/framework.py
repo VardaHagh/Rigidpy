@@ -170,7 +170,7 @@ class Framework(object):
         # Tension spring stiffness
         # by convention: compression has postive tension
         seperation_norm = self.L0 - norm(self.dr,axis=1)
-        self.tension = power * np.dot(self.K, seperation_norm**(power-1))
+        self.tension = np.dot(self.K, seperation_norm**(power-1))
         self.KP = np.diag(self.tension/self.L0)
 
         ### effective stiffness to use in non-Hookean cases
@@ -259,7 +259,7 @@ class Framework(object):
     def HessianMatrixStable(self):
         '''calculate stable Hessian.'''
         R = self.RigidityMatrixStable()
-        H = np.dot(R.T, np.dot(self.K, R))
+        H = np.dot(R.T, np.dot(self.Ke, R))
         return H
 
     def HessianMatrixDestable(self):
