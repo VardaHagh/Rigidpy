@@ -382,11 +382,19 @@ class Framework(object):
         return G
 
     def SelfStress(self):
-        '''Return states of self-stress (SSS).'''
+        '''
+        Return states of self-stress (SSS).
+        The output array shape : (NB, R) where R is the number of states of
+        self-stress (or redundant bonds) and NB is the number of bonds.
+        '''
         RT = self.RigidityMatrix().T
         u, s, vh = np.linalg.svd(RT)
         nullity = self.NB - np.sum(s>1e-10)
         SSS = vh[-nullity:].T
+        if nullity == 0:
+            SSS=0
+        else:
+            SSS = vh[-nullity:].T
         return SSS
 
     def ElasticModulus(self, strainMatrix):
