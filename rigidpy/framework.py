@@ -171,7 +171,7 @@ class Framework(object):
         # by convention: compression has postive tension
         seperation_norm = self.L0 - norm(self.dr,axis=1)
         self.tension = np.dot(self.K, seperation_norm**(power-1))
-        self.KP = np.diag(self.tension/self.L0)
+        self.KP = np.diag(self.tension/norm(self.dr,axis=1))
 
         ### effective stiffness to use in non-Hookean cases
         if power == 2:
@@ -188,7 +188,8 @@ class Framework(object):
         Elements are normalized position difference of connected
         coordinates."""
         N,M,d=self.N,self.NB,self.dim
-        drNorm = self.L0[:,np.newaxis]
+        L = norm(self.dr,axis=1)
+        drNorm = L[:,np.newaxis]
         dr = self.dr/drNorm # normalized dr
         # find row and col for non zero values
         row = np.repeat(np.arange(M),2)
@@ -281,7 +282,8 @@ class Framework(object):
 
     def __RigidityMatrixSparse(self):
         N,M,d=self.N,self.NB,self.dim
-        drNorm = self.L0[:,np.newaxis]
+        L = norm(self.dr,axis=1)
+        drNorm = L[:,np.newaxis]
         dr = self.dr/drNorm # normalized dr
         row = np.repeat(np.arange(M),2*d)
         index_range = np.arange(0,d).reshape(-1,1)
