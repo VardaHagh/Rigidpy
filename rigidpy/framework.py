@@ -139,7 +139,7 @@ class Framework(object):
         # Identify long bonds
         if self.C not in [2,3]:
             raise ValueError('Second dimension should be 2 or 3.')
-        elif self.C is 2:
+        elif self.C == 2:
             # vector from node i to node j if bond is (i,j)
             dr = -np.diff(coordinates[bonds[:,0:2]],axis=1).reshape(-1,self.dim)
             # length of dr
