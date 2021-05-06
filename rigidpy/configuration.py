@@ -78,8 +78,8 @@ class Configuration(object):
         P1 = report.x.reshape((-1, self.dim))
         return P1
 
-    def energy_minimize_LBFGSB(self, L, restlengths, pins=None):
-    
+    def energy_minimize_LBFGSB(self, L, restlengths, pins=None, maxIteration = 1000):
+
         E = np.array(self.bonds,int)
         self.initialenergy =self.Energy(self.x0, L, restlengths)
         # ensure pinned nodes don't move
@@ -91,9 +91,9 @@ class Configuration(object):
                     val = P_repeat[pin*self.dim+i].tolist()
                     bounds[pin*self.dim+i]= val
 
-        report = opt.minimize(fun=self.Energy, x0=self.x0, args = (L, restlengths), 
+        report = opt.minimize(fun=self.Energy, x0=self.x0, args = (L, restlengths),
                               method='L-BFGS-B', bounds = bounds,
-                              options={'disp': False, 'xtol': 1e-7,'return_all': False, 'maxiter': 1000})
+                              options={'disp': False, 'maxiter': maxIteration})
         self.report = report
         self.finalenergy = report.fun
         P1 = report.x.reshape((-1, self.dim))
