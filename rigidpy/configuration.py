@@ -10,6 +10,8 @@ class Configuration(object):
     '''
     def __init__(self, coordinates, bonds, basis, k=1, dim=2):
         self.dim = dim
+        self.Ns,self.Nb = len(coordinates),len(bonds)
+        self.coordinates = coordinates
         self.x0 = coordinates.ravel()
         self.bonds = bonds
         self.basis = basis
@@ -47,13 +49,12 @@ class Configuration(object):
 
     def Forces(self, P, L, restlengths):
         coordinates = P.reshape((-1, self.dim))
-        Ns,Nb = len(coordinates),len(self.bonds)
         PF = self.framework
         lengths = self.lengths # length of all bonds
         deltaL = (lengths-L)/lengths
-        vals = np.multiply(deltaL.reshape(Nb,-1),PF.dr)
+        vals = np.multiply(deltaL.reshape(self.Nb,-1),PF.dr)
         vals = np.dot(PF.K,vals)
-        Force = np.zeros((Ns,Ns,self.dim),float)
+        Force = np.zeros((self.Ns,self.Ns,self.dim),float)
         row,col = self.bonds.T
         Force[row,col] = vals
         Force[col,row] = -vals
@@ -71,21 +72,29 @@ class Configuration(object):
         report = opt.minimize(fun=self.Energy, x0=self.x0, args = (L, restlengths),
                               method='Newton-CG', jac = self.Forces, hess=self.Hessian,
                               options={'disp': False, 'xtol': 1e-7,'return_all': False, 'maxiter': None})
+
         self.report = report
         self.finalenergy = report.fun
         P1 = report.x.reshape((-1, self.dim))
         return P1
 
-    """def energy_minimize_BFGS(self, coordinates, bonds, a1, a2, L, k=1):
-        P = np.array()
+    def energy_minimize_LBFGSB(self, L, restlengths, pins=None):
+    
         E = np.array(self.bonds,int)
-        self.initialenergy =self.energy(P.ravel(), E, a1, a2, L, k)
-        report = opt.minimize(self.energy, P.ravel(), args = (E, a1, a2, L, k), method='L-BFGS-B',
-                          options={'disp': None, 'maxls': 20, 'iprint': -1,
-                                   'gtol': 1e-10, 'eps': 1e-10, 'maxiter': 50000,
-                                   'ftol': 1e-10,'maxcor': 30,
-                                   'maxfun': 50000})
+        self.initialenergy =self.Energy(self.x0, L, restlengths)
+        # ensure pinned nodes don't move
+        bounds = ([(None,None)] * (self.dim * self.Ns))
+        P_repeat = np.repeat(self.coordinates,self.dim).reshape(-1,self.dim)
+        if pins:
+            for pin in pins:
+                for i in range(self.dim):
+                    val = P_repeat[pin*self.dim+i].tolist()
+                    bounds[pin*self.dim+i]= val
+
+        report = opt.minimize(fun=self.Energy, x0=self.x0, args = (L, restlengths), 
+                              method='L-BFGS-B', bounds = bounds,
+                              options={'disp': False, 'xtol': 1e-7,'return_all': False, 'maxiter': 1000})
         self.report = report
         self.finalenergy = report.fun
         P1 = report.x.reshape((-1, self.dim))
-        return P1"""
+        return P1
