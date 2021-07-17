@@ -1,1 +1,7 @@
 .DS_Store
+docs/
+.metals/
+.vscode/
+rigidpy.egg-info/
+rigidpy/__pycache__/
+rigidpy_2/
