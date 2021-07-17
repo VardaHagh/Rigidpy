@@ -1,5 +1,5 @@
-<p align="center">
-  <img src="./images/logo.png" width="150" title="hover text">
+<p align="left">
+  <img src="./images/logo.png" width="200" title="hover text">
 </p>
 
 `RigidPy` is a library written in python with minimal dependency to compute
