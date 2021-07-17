@@ -1,6 +1,6 @@
-<img src="./images/logo.png"
-    alt="Markdown Monster icon"
-    style="float: left; margin-right: 10px; max-width: 200px" />
+<p align="center">
+  <img src="./images/logo.png" width="150" title="hover text">
+</p>
 
 `RigidPy` is a library written in python with minimal dependency to compute
 rigidity properties of a graph/network. The namespace is designed to
