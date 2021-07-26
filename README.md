@@ -6,17 +6,24 @@ Rigidity Analysis in Python
 [![GitHub](https://img.shields.io/badge/GitHub-rigidPy-blue)](https://github.com/VardaHagh/Rigidpy/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
-
+***
 `rigidPy` is a library written in python with minimal dependency to compute
 rigidity properties of a graph/network. The namespace is designed to
-resemble mathematical terminology unifying the research themes in mathematics, physics and biology. The library can be used to compute the rigidity matrix, vibrational properties, and elastic properties of the spring networks. The library also offers a set of
+resemble mathematical terminology unifying the research themes in mathematics, physics and biology. 
+The library can be used to compute the rigidity matrix, vibrational properties, and 
+elastic properties of the spring networks. It also offers a set of
 tools to find different realizations of a graph for a given topology.
 
 The library consists of three modules:
 
-* **Framework**: This is the main module which given a set of coordinates and connectivity can compute rigidty matrix, Hessian matrix, vibrarional frequencies, 
-* **Conguration**: This module minimizes energy by optimizing the positions of sites given a set of target edge lengths.
-* **Circuit (experimental)**: This module allows one to start from a given framework (identified by coordinates of sites and their connectivty) and find another network that satisfies all constraints but with different position of sites (alternative realization of a framework).
+* **Framework**: This is the main module which given a set of coordinates and 
+  connectivity can compute rigidty matrix, Hessian matrix, vibrarional frequencies, 
+* **Conguration**: This module minimizes energy by optimizing the positions of sites 
+  given a set of target edge lengths.
+* **Circuit (experimental)**: This module allows one to start from a given framework 
+  (identified by coordinates of sites and their connectivty) and find another network 
+  that satisfies all constraints but with different position of sites (alternative 
+  realization of a framework).
 
 ### Example
 
