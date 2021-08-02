@@ -2,7 +2,7 @@ from __future__ import division, print_function, absolute_import
 from typing import Union
 import numpy as np
 from rigidpy.circuit_length import circuit_length
-from rigidpy.circuit_volumen import circuit_volume
+from rigidpy.circuit_volume import circuit_volume
 
 
 def Circuit(
