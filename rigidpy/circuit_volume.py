@@ -7,7 +7,7 @@ from .framework import Framework
 from .configuration import Configuration
 import time
 
-from typing import Union
+from typing import Union, Dict
 
 
 class circuit_volume(object):

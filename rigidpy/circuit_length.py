@@ -1,5 +1,4 @@
 from __future__ import division, print_function, absolute_import
-from typing import Dict
 
 import numpy as np
 from numpy.linalg import norm
@@ -8,7 +7,7 @@ from .framework import Framework
 from .configuration import Configuration
 import time
 
-from typing import Union
+from typing import Union, Dict
 
 
 class circuit_length(object):
