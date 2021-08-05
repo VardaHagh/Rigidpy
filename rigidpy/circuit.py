@@ -1,18 +1,18 @@
 from __future__ import division, print_function, absolute_import
 from typing import Union
 import numpy as np
-from rigidpy.circuit_length import circuit_length
-from rigidpy.circuit_volume import circuit_volume
+from rigidpy.circuit_length import circuitLength
+from rigidpy.circuit_volume import circuitVolume
 
 
-def Circuit(
+def circuit(
     coordinates: Union[np.array, list],
     bonds: Union[np.array, list],
     basis: Union[np.array, list],
     mode: str = "length",
     k: Union[np.array, float] = 1.0,
     varcell: Union[np.array, list] = None,
-) -> Union[circuit_volume, circuit_length]:
+) -> Union[circuitVolume, circuitLength]:
     """Set up a circuit
 
     Args:
@@ -42,14 +42,14 @@ def Circuit(
 
     """
     if mode == "length":
-        from .circuit_length import circuit_length
+        from .circuit_length import circuitLength
 
-        circuit = circuit_length(coordinates, bonds, basis, k=k, varcell=None)
+        circuit = circuitLength(coordinates, bonds, basis, k=k, varcell=None)
         return circuit
     elif mode == "volume":
-        from .circuit_volume import circuit_volume
+        from .circuit_volume import circuitVolume
 
-        circuit = circuit_volume(coordinates, bonds, basis, k=k, varcell=varcell)
+        circuit = circuitVolume(coordinates, bonds, basis, k=k, varcell=varcell)
         return circuit
     else:
         raise TypeError(

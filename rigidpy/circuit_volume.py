@@ -3,14 +3,14 @@ from __future__ import division, print_function, absolute_import
 import numpy as np
 from numpy.linalg import norm
 import matplotlib.pyplot as plt
-from .framework import Framework
-from .configuration import Configuration
+from .framework import framework
+from .configuration import configuration
 import time
 
 from typing import Union, Dict
 
 
-class circuit_volume(object):
+class circuitVolume(object):
     """
     Set up a circuit
 
@@ -51,9 +51,9 @@ class circuit_volume(object):
         self.varcell = varcell
         self.k = k
         self.center = np.mean(coordinates, axis=0)  # center of mass
-        PF = Framework(coordinates, bonds, basis=basis, k=k, varcell=varcell)
+        PF = framework(coordinates, bonds, basis=basis, k=k, varcell=varcell)
         self.K = PF.K
-        self.restlengths = PF.EdgeLengths()
+        self.restLengths = PF.edgeLengths()
         self.results = None
         print("Building a circuit by changing the volume...")
 
@@ -76,8 +76,8 @@ class circuit_volume(object):
         nchange = self.nchange
 
         """create a framework, currently works only for 2D"""
-        PF = Framework(coordinates, bonds, basis=basis, k=self.k, varcell=self.varcell)
-        evalues, evectors = PF.Eigenspace(eigvals=(0, dim + 1))
+        PF = framework(coordinates, bonds, basis=basis, k=self.k, varcell=self.varcell)
+        evalues, evectors = PF.eigenspace(eigvals=(0, dim + 1))
         nzeros = np.sum(evalues < 1e-14)  # number of zero eigenvalues
         if nzeros > dim + 1:
             print("Warning: Rigidity rank dropped!")
@@ -98,7 +98,7 @@ class circuit_volume(object):
         d["direction"] = enet
         return d
 
-    def nextPoint(self, coordinates, bonds, basis, direction, stepsize, threshold=0.99):
+    def nextPoint(self, coordinates, bonds, basis, direction, stepSize, threshold=0.99):
 
         # eigenvector for points and lattice vectors
         ## and change in lattice vectors
@@ -109,7 +109,7 @@ class circuit_volume(object):
         eCell = latticeU.reshape(-1, self.dim)
 
         # initial step
-        scale = stepsize
+        scale = stepSize
         nextP = coordinates + scale * eCoordinates
         nextBasis = basis + scale * eCell
         nextPoint = self.point(nextP, bonds, basis)
@@ -128,7 +128,7 @@ class circuit_volume(object):
 
     def follow(
         self,
-        stepsize: float = 1e-3,
+        stepSize: float = 1e-3,
         iteration: int = 10,
         relaxStep: int = 5,
         report: bool = True,
@@ -143,14 +143,14 @@ class circuit_volume(object):
             "basis": [],
             "energy": [],
             "nsteps": None,
-            "stepsize": stepsize,
+            "stepsize": stepSize,
             "time": None,
         }
 
         p = np.copy(self.coordinates)
         bonds = self.bonds
         basis = self.basis
-        restlengths = self.restlengths
+        restLengths = self.restLengths
         center = self.center
         dim = self.dim
         # N = self.N
@@ -174,7 +174,7 @@ class circuit_volume(object):
             # current volume, distance from center of mass, energy
             volume = np.abs(np.product(np.linalg.eig(basis)[0]))
             dist = np.mean(norm(p - center, axis=1))
-            energy = 0.5 * np.dot(self.K, (self.restlengths - lengths) ** 2)
+            energy = 0.5 * np.dot(self.K, (restLengths - lengths) ** 2)
 
             # append current data
             d["coordinates"].append(p)
@@ -184,14 +184,14 @@ class circuit_volume(object):
             d["energy"].append(energy)
 
             # update
-            nextP, nextBasis = self.nextPoint(p, bonds, basis, direction, stepsize)
+            nextP, nextBasis = self.nextPoint(p, bonds, basis, direction, stepSize)
             p = nextP["coordinates"]
             basis = nextBasis
 
             if optimization and i != 0:
                 if i % relaxStep == 0:
-                    C = Configuration(p, bonds, basis, self.K, dim)
-                    p = C.energy_minimize_Newton(self.restlengths)
+                    c = configuration(p, bonds, basis, self.K, dim)
+                    p = c.energyMinimizeNewton(restLengths, restLengths)
         d["nsteps"] = i + 1
         timef = time.time()
         totalTime = timef - timei
@@ -201,7 +201,7 @@ class circuit_volume(object):
         self.results = d
         return d
 
-    def DetectPassagePoints(self) -> np.ndarray:
+    def detectPassagePoints(self) -> np.ndarray:
         """
         This function determines if the volume of
         of the cell returns to its original
@@ -213,7 +213,7 @@ class circuit_volume(object):
         mask = np.diff(np.sign(arr)) != 0
         return np.nonzero(mask)[0]
 
-    def DotProduct(self, save: bool = False, name: str = None) -> plt.Figure:
+    def dotProduct(self, save: bool = False, name: str = None) -> plt.Figure:
         results = self.results
         nsteps = results["nsteps"]
         results

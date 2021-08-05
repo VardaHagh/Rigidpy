@@ -3,14 +3,13 @@ from __future__ import division, print_function, absolute_import
 import numpy as np
 from numpy.linalg import norm
 import matplotlib.pyplot as plt
-from .framework import Framework
-from .configuration import Configuration
+from .framework import framework
+from .configuration import configuration
 import time
-
 from typing import Union, Dict
 
 
-class circuit_length(object):
+class circuitLength(object):
     """Set up a circuit where degrees of freedom are lengths.
 
     Args:
@@ -52,9 +51,9 @@ class circuit_length(object):
         self.varcell = varcell
         self.k = k
         self.center = np.mean(coordinates, axis=0)  # center of mass
-        PF = Framework(coordinates, bonds, basis=basis, k=k, varcell=varcell)
+        PF = framework(coordinates, bonds, basis=basis, k=k, varcell=varcell)
         self.K = PF.K
-        self.restlengths = PF.EdgeLengths()
+        self.restLengths = PF.edgeLengths()
         self.results = None
         print("Building a circuit by cutting a bond...")
 
@@ -94,8 +93,8 @@ class circuit_length(object):
         # nchange = self.nchange
 
         """create a framework"""
-        PF = Framework(coordinates, bonds, basis=basis, k=self.k, varcell=self.varcell)
-        evalues, evectors = PF.Eigenspace(eigvals=(0, dim + 2))
+        PF = framework(coordinates, bonds, basis=basis, k=self.k, varcell=self.varcell)
+        evalues, evectors = PF.eigenspace(eigvals=(0, dim + 2))
         nzeros = np.sum(evalues < 1e-14)  # number of zero eigenvalues
         if nzeros > dim + 1:
             print("Warning: Rigidity rank dropped!")
@@ -109,7 +108,7 @@ class circuit_length(object):
         enet = enet / norm(enet)
 
         d["coordinates"] = coordinates
-        d["lengths"] = PF.EdgeLengths()
+        d["lengths"] = PF.edgeLengths()
         d["eigenvalue"] = evalues[0]
         d["eigenvector"] = evectors[0]
         d["direction"] = enet
@@ -176,7 +175,7 @@ class circuit_length(object):
         bonds = self.bonds
         M = len(bonds)
         basis = self.basis
-        restlengths = self.restlengths
+        restLengths = self.restLengths
         center = self.center
         N, dim = self.N, self.dim
 
@@ -220,7 +219,7 @@ class circuit_length(object):
             energy = 0.5 * np.dot(KAfterCut, (restlengthsAfterCut - lengths) ** 2)
 
             # length of cut bonds
-            tempF = Framework(p, bonds, basis)
+            tempF = framework(p, bonds, basis)
             length = tempF.EdgeLengths()[bondId]
 
             # append current data
@@ -239,8 +238,8 @@ class circuit_length(object):
 
             if optimization and i != 0:
                 if i % relaxStep == 0:
-                    C = Configuration(p, bondsAfterCut, basis, kAfterCut, dim)
-                    p = C.energy_minimize_Newton(L)
+                    C = configuration(p, bondsAfterCut, basis, kAfterCut, dim)
+                    p = C.energyMinimizeNewton(restLengths, restLengths)
 
             """if path wants to repeat itself, break the loop.The
             idea is to check when previous step gets closer to initial
@@ -294,7 +293,7 @@ class circuit_length(object):
         mask = np.diff(np.sign(arr)) != 0
         return np.nonzero(mask)[0]
 
-    def CircuitRealization(
+    def circuitRealization(
         self, save: bool = False, name: str = None, **kwds
     ) -> plt.Figure:
         results = self.results
@@ -313,7 +312,7 @@ class circuit_length(object):
         else:
             return plt.show(fig)
 
-    def PlotRealization(
+    def plotRealization(
         self, save: bool = False, name: str = None, **kwds
     ) -> plt.Figure:
         """Draw the configurational path after removal of degrees of freedom.
@@ -325,9 +324,9 @@ class circuit_length(object):
         Returns:
             : [description]
         """
-        return self.CircuitRealization(save=save, name=name, **kwds)
+        return self.circuitRealization(save=save, name=name, **kwds)
 
-    def DotProduct(self, save: bool = False, name: bool = None) -> plt.Figure:
+    def dotProduct(self, save: bool = False, name: bool = None) -> plt.Figure:
         """ """
         results = self.results
         nsteps = results["nsteps"]
