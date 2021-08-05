@@ -190,7 +190,7 @@ class Framework(object):
         """
         return norm(self.dr, axis=1)
 
-    def RigidityMatrixStable(self) -> np.ndarray:
+    def RigidityMatrixGeometric(self) -> np.ndarray:
         """Calculate rigidity matrix of the graph.
         Elements are normalized position difference of connected
         coordinates.
@@ -264,7 +264,7 @@ class Framework(object):
 
     def RigidityMatrix(self) -> np.ndarray:
         """Calculate rigidity matrix of the graph. For now, it simply returns
-        stable rigidity matrix.
+        geometric rigidity matrix.
 
         Returns:
             np.ndarray: rigidity matrix
@@ -272,19 +272,19 @@ class Framework(object):
         Todo:
             Update the function to include the second-order term, if required.
         """
-        R = self.RigidityMatrixStable()
+        R = self.RigidityMatrixGeometric()
         return R
 
-    def HessianMatrixStable(self) -> np.ndarray:
-        """calculate stable Hessian."""
-        R = self.RigidityMatrixStable()
+    def HessianMatrixGeometric(self) -> np.ndarray:
+        """calculate geometric Hessian."""
+        R = self.RigidityMatrixGeometric()
         H = np.dot(R.T, np.dot(self.Ke, R))
         return H
 
-    def HessianMatrixDestable(self) -> np.ndarray:
-        """calculate destable Hessian."""
+    def HessianMatrixPrestress(self) -> np.ndarray:
+        """calculate prestress Hessian."""
         KP = self.KP
-        R = self.RigidityMatrixStable()
+        R = self.RigidityMatrixGeometric()
         H = np.dot(R.T, np.dot(KP, R))
         for i in range(self.dim):
             Raxis = self.RigidityMatrixAxis(i)
@@ -292,10 +292,10 @@ class Framework(object):
         return H
 
     def HessianMatrix(self) -> np.ndarray:
-        """calculate total Hessian = stable + unstable"""
-        Hstable = self.HessianMatrixStable()
-        Hdestable = self.HessianMatrixDestable()
-        Htotal = Hstable + Hdestable
+        """calculate total Hessian = geometric + prestress"""
+        HGeometric = self.HessianMatrixGeometric()
+        HPrestress = self.HessianMatrixPrestress()
+        Htotal = HGeometric + HPrestress
         return Htotal
 
     def __RigidityMatrixSparse(self) -> np.ndarray:
