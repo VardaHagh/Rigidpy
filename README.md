@@ -39,11 +39,11 @@ basis = [[0,0],[0,0]]
 # which site is pinned in space
 pins = [0]
 # create a Framework object
-F = rp.Framework(coordinates, bonds, basis=basis, pins=pins)
+F = rp.framework(coordinates, bonds, basis=basis, pins=pins)
 # calculate the rigidity matrix
-print ("rigidity matrix:\n",F.RigidityMatrix())
+print ("rigidity matrix:\n",F.rigidityMatrix())
 # calculate the eigenvalues of Hessian/dynamical matrix
-eigvals, eigvecs = F.Eigenspace(eigvals=(0,3))
+eigvals, eigvecs = F.eigenspace(eigvals=(0,3))
 print("vibrational eigenvalues:\n",eigvals)
 ```
 
