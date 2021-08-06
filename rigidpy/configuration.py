@@ -38,7 +38,7 @@ class configuration(object):
         self.framework = None
         self.lengths = None
 
-    def Energy(
+    def energy(
         self,
         P: np.ndarray,
         L: Union[np.array, list, float],
@@ -67,13 +67,14 @@ class configuration(object):
         return energy
 
     def forces(
-        self,
-        L: np.ndarray,
+        self, P: np.ndarray, L: np.ndarray, restLengths: np.ndarray
     ) -> np.ndarray:
         """Compute force on sites.
 
         Args:
-            L (np.array, optional): Target lengths. Defaults to None.
+            P (np.ndarray): positions of sites
+            L (np.array): Target lengths.
+            restLengths (np.array): Rest lengths.
 
         Returns:
             np.ndarray: force
@@ -92,8 +93,14 @@ class configuration(object):
             -1,
         )
 
-    def Hessian(self) -> np.ndarray:
+    def hessian(
+        self, P: np.ndarray, L: np.ndarray, restLengths: np.ndarray
+    ) -> np.ndarray:
         """Computes Hessian of framework.
+        Args:
+            P (np.ndarray): positions of sites
+            L (np.array): Target lengths.
+            restLengths (np.array): Rest lengths.
 
         Returns:
             np.ndarray: Hessian matrix.
@@ -117,7 +124,7 @@ class configuration(object):
         # E = np.array(self.bonds, int)
         self.initialenergy = self.energy(self.x0, L, restLengths)
         report = opt.minimize(
-            fun=self.Energy,
+            fun=self.energy,
             x0=self.x0,
             args=(L, restLengths),
             method="Newton-CG",
@@ -150,7 +157,7 @@ class configuration(object):
             np.ndarray: optimized site positions
         """
         # E = np.array(self.bonds, int)
-        self.initialEnergy = self.Energy(self.x0, L, restLengths)
+        self.initialEnergy = self.energy(self.x0, L, restLengths)
         # ensure pinned nodes don't move
         bounds = [(None, None)] * (self.dim * self.Ns)
         pRepeat = np.repeat(self.coordinates, self.dim).reshape(-1, self.dim)
@@ -161,7 +168,7 @@ class configuration(object):
                     bounds[pin * self.dim + i] = val
 
         report = opt.minimize(
-            fun=self.Energy,
+            fun=self.energy,
             x0=self.x0,
             args=(L, restLengths),
             method="L-BFGS-B",

@@ -31,7 +31,7 @@ class framework(object):
             k (Union[np.array, float], optional): Spring constant/stiffness.
                 If an array is supplied, the shape should be ``(M,2)``.
                 Defaults to 1.0.
-            restlengths (Union[np.array, list, float], optional): Equilibrium
+            restLengths (Union[np.array, list, float], optional): Equilibrium
                 or rest length of bonds, used for systems with pre-stress.
                 Defaults to None.
             varcell (Union[np.array, list], optional): (d*d,) array of booleans/int
@@ -41,7 +41,7 @@ class framework(object):
                 basis vector is allowed to change.. Defaults to None.
             power (int, optional): Power of potential energy.
                 power=2 is Hookean, power=5/2 is Hertzian. For
-                non-Hookean potentials, make sure to supply restlengths non-equal to the
+                non-Hookean potentials, make sure to supply restLengths non-equal to the
                 current length of the bonds, otherwise the calculations will be wrong.
                 Defaults to 2.
 
@@ -59,7 +59,7 @@ class framework(object):
             >>> pins = [0]
             >>> F = rp.Framework(coordinates, bonds, basis=basis, pins=pins)
             >>> print ("rigidity matrix:\n",F.RigidityMatrix())
-            >>> eigvals, eigvecs = F.Eigenspace(eigvals=(0,3))
+            >>> eigvals, eigvecs = F.eigenspace(eigvals=(0,3))
             >>> print("vibrational eigenvalues:\n",eigvals)
     """
 
@@ -70,7 +70,7 @@ class framework(object):
         basis: Union[np.array, list] = None,
         pins: Union[np.array, list] = None,
         k: Union[np.array, float] = 1.0,
-        restlengths: Union[np.array, list, float] = None,
+        restLengths: Union[np.array, list, float] = None,
         # mass=1,
         varcell: Union[np.array, list] = None,
         power: int = 2,
@@ -165,10 +165,10 @@ class framework(object):
             # feature for future release
 
         # Equilibrium or rest length of springs
-        if restlengths is None:
+        if restLengths is None:
             self.L0 = norm(self.dr, axis=1)
         else:
-            self.L0 = restlengths
+            self.L0 = restLengths
 
         # Tension spring stiffness
         # by convention: compression has postive tension
@@ -272,12 +272,12 @@ class framework(object):
         Todo:
             Update the function to include the second-order term, if required.
         """
-        R = self.RigidityMatrixGeometric()
+        R = self.rigidityMatrixGeometric()
         return R
 
     def hessianMatrixGeometric(self) -> np.ndarray:
         """calculate geometric Hessian."""
-        R = self.RigidityMatrixGeometric()
+        R = self.rigidityMatrixGeometric()
         H = np.dot(R.T, np.dot(self.Ke, R))
         return H
 
@@ -322,7 +322,7 @@ class framework(object):
         HS = RST.dot((self.KS).dot(RS))
         return HS
 
-    def eigenspace(self, eigvals=(0, 4)) -> np.ndarray:
+    def eigenSpace(self, eigvals=(0, 4)) -> np.ndarray:
         """Returns sorted eigenvalues and eigenvectors of
         total Hessian matrix.
 
