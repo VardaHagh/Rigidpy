@@ -6,3 +6,4 @@ rigidpy.egg-info/
 rigidpy/__pycache__/
 rigidpy_2/
 todo
+notebooks/.ipynb_checkpoints/
