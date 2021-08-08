@@ -61,10 +61,9 @@ vibrational eigenvalues:
 ### Requirements
 
 * `Python` 3.5+
-* `Numpy` (>= 1.9.3)
-* `Scipy` (>= 0.14.0)
+* `Numpy` (>= 1.20.0)
+* `Scipy` (>= 1.6.0)
 * `Matplotlib` (>= 1.4.3) (only required for plotting)
-
 
 ### Authors:
 
