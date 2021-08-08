@@ -7,3 +7,4 @@ rigidpy/__pycache__/
 rigidpy_2/
 todo
 notebooks/.ipynb_checkpoints/
+__pycache__
