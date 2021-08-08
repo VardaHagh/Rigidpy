@@ -10,11 +10,11 @@ with open("LICENSE") as f:
 
 setup(
     name="rigidpy",
-    version="0.0.3",
+    version="0.0.4",
     description="rigidpy package for rigidity analysis",
     long_description=readme,
     keywords="rigidity physics math python flexibility condensedmatter",
-    author="Varda Faghir Hagh",
+    author="Varda Faghir Hagh, Mahdi Sadjadi",
     author_email="vardahagh@uchicago.edu",
     url="https://github.com/vfaghirh/rigidpy",
     license=license,
