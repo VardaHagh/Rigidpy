@@ -43,7 +43,7 @@ F = rp.framework(coordinates, bonds, basis=basis, pins=pins)
 # calculate the rigidity matrix
 print ("rigidity matrix:\n",F.rigidityMatrix())
 # calculate the eigenvalues of Hessian/dynamical matrix
-eigvals, eigvecs = F.eigenspace(eigvals=(0,3))
+eigvals, eigvecs = F.eigenSpace(eigvals=(0,3))
 print("vibrational eigenvalues:\n",eigvals)
 ```
 
@@ -55,7 +55,6 @@ rigidity matrix:
  [ 0.          0.          0.70710678  0.70710678]]
 vibrational eigenvalues:
  [2.22044605e-16 6.33974596e-01 1.00000000e+00 2.36602540e+00]
-
 ```
 
 
