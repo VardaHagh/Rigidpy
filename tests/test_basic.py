@@ -1,1 +1,1 @@
-from .context import rigidpy
+from context import rigidpy
