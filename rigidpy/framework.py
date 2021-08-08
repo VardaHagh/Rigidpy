@@ -475,7 +475,7 @@ class framework(object):
         return bulk
 
     def shearModulus(self, eps: float = 1e-6) -> float:
-        """Compute shear modulus.
+        """Compute (pure) shear modulus.
 
         Args:
             eps (float, optional): strain amount. Defaults to 1e-6.
