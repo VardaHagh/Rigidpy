@@ -10,7 +10,7 @@ with open("LICENSE") as f:
 
 setup(
     name="rigidpy",
-    version="0.0.4",
+    version="0.0.8",
     description="rigidpy package for rigidity analysis",
     long_description=readme,
     keywords="rigidity physics math python flexibility condensedmatter",
