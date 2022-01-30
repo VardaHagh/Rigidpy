@@ -3,9 +3,20 @@ import numpy as np
 import os
 
 
-def read_data():
+def read_data(datasize=96):
+    """The library has two different networks to test. One with 96 sites
+    and one with 6 sites.
+
+    Args:
+        datasize (int, optional): The number of sites in the file. Defaults to 96.
+
+    Returns:
+        np.array: coordinates
+        np.array: bonds
+        np.array: basis
+    """
     CUR_DIR = os.path.dirname(__file__)
-    RESOURCES_DIR = f"{CUR_DIR}/data/"
+    RESOURCES_DIR = f"{CUR_DIR}/data_{datasize}"
     coordinates = np.loadtxt(f"{RESOURCES_DIR}/coordinates.dat")
     bonds = np.loadtxt(f"{RESOURCES_DIR}/bonds.dat", int)
     basis = np.loadtxt(f"{RESOURCES_DIR}/basis.dat")
@@ -29,7 +40,7 @@ def test_framework_triangle():
 
 def test_framework_periodic():
     """Test Framework module."""
-    coordinates, bonds, basis = read_data()
+    coordinates, bonds, basis = read_data(96)
     # create a Framework object
     F = rp.framework(coordinates, bonds, basis=basis)
     # calculate the rigidity matrix
