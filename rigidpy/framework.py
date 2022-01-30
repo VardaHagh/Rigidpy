@@ -492,7 +492,7 @@ class framework(object):
         shear = self.elasticModulus(strainMatrix) / (2 * eps * eps)
         return shear
 
-    def visualize(self, figsize=(6,6)):
+    def visualize(self, figsize=(6,6), save=False, filepath=None):
         """Visualize the network"""
 
         try:
@@ -527,19 +527,26 @@ class framework(object):
             marker="o",
             linestyle="",
             color="dodgerblue",
-            markersize=10,
+            markersize=11,
+            alpha=1.0,
             zorder=2
         )
         # pinned sites
         if self.pins:
             ax.plot(
                 *self.coordinates[self.pins].T,
-                marker="o",
+                marker="D",
                 linestyle="",
                 color="#e34234",
-                markersize=10,
+                markersize=11,
+                alpha=1.0,
                 zorder=2
             )
         ax.set_axis_off()
         plt.tight_layout()
+
+        if save:
+            if not filepath:
+                raise ValueError("You should pass a full path to save your figure.")
+            plt.savefig(filepath,dpi=300,transparent=True)
         plt.show(fig)
