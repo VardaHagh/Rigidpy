@@ -125,7 +125,7 @@ class framework(object):
             else:
                 self.volume = 1
 
-        # froce constant matrix
+        # force constant matrix
         if isinstance(k, (int, float)):
             self.K = np.diagflat(k * np.ones(self.NB))
         else:
@@ -146,15 +146,17 @@ class framework(object):
             lengths = norm(dr, axis=1)
             # which bonds are long == cross the boundary
             self.indexLong = indexLong = np.nonzero(lengths > self.cutoff)[0]
+            self.indexShort = np.nonzero(lengths <= self.cutoff)[0]
             # two ends of long bonds
             longBonds = bonds[indexLong]
-            # index of neiboring boxes for long bonds only
+            # index of neighboring boxes for long bonds only
             index = [
                 np.argmin(norm(item[0] - item[1] - transVectors, axis=1))
                 for item in coordinates[longBonds]
             ]
-            dr[indexLong] -= transVectors[index]
-            # negihbor is in which neighboring box
+            print(transVectors[index])
+            dr[indexLong] = dr[indexLong] - transVectors[index]
+            # neighbor is in which neighboring box
             self.mn = regionIndex[index]
             # correct vector from particle 1 to particle 2
             self.dr = dr
@@ -171,7 +173,7 @@ class framework(object):
             self.L0 = restLengths
 
         # Tension spring stiffness
-        # by convention: compression has postive tension
+        # by convention: compression has positive tension
         seperation_norm = self.L0 - norm(self.dr, axis=1)
         self.tension = np.dot(self.K, seperation_norm ** (power - 1))
         self.KP = np.diag(self.tension / norm(self.dr, axis=1))
@@ -186,7 +188,7 @@ class framework(object):
         """Compute the length of all bonds.
 
         Returns:
-            np.array: bond lengths]
+            np.array: bond lengths
         """
         return norm(self.dr, axis=1)
 
@@ -489,3 +491,62 @@ class framework(object):
         strainMatrix = np.diag(strainArray)
         shear = self.elasticModulus(strainMatrix) / (2 * eps * eps)
         return shear
+
+    def visualize(self, markersize=14, figsize=(6,6), save=False, filepath=None):
+        """Visualize the network"""
+
+        try:
+            import matplotlib.pyplot as plt
+        except ImportError as e:
+            raise ImportError("Matplotlib should be installed for visualization.")
+
+        if self.dim != 2:
+            raise ValueError("Plotting is only supported in two dimensions.")
+
+        def _bond_plot(coordinates, bondlist):
+            x, y = [], []
+            for item in bondlist:
+                xs = coordinates[item][:, 0]
+                ys = coordinates[item][:, 1]
+                x.extend(xs)
+                x.append(None)
+                y.extend(ys)
+                y.append(None)
+            return x, y
+
+        fig, ax = plt.subplots(1, 1, figsize=figsize)
+        if self.boundary in ("periodic", "periodic+pinned"):
+            x, y = _bond_plot(self.coordinates, self.bonds[self.indexShort])
+        else:
+            x, y = _bond_plot(self.coordinates, self.bonds)
+         # bonds
+        ax.plot(x, y, color="k", lw=3, zorder=1, alpha=0.8)
+        # non-pinned sites
+        ax.plot(
+            *self.coordinates.T,
+            marker="o",
+            linestyle="",
+            color="dodgerblue",
+            markersize=markersize,
+            alpha=1.0,
+            zorder=2
+        )
+        # pinned sites
+        if self.pins:
+            ax.plot(
+                *self.coordinates[self.pins].T,
+                marker="D",
+                linestyle="",
+                color="#e34234",
+                markersize=markersize+1,
+                alpha=1.0,
+                zorder=2
+            )
+        ax.set_axis_off()
+        plt.tight_layout()
+
+        if save:
+            if not filepath:
+                raise ValueError("You should pass a full path to save your figure.")
+            plt.savefig(filepath,dpi=300,transparent=True)
+        plt.show(fig)
