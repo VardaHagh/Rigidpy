@@ -492,7 +492,7 @@ class framework(object):
         shear = self.elasticModulus(strainMatrix) / (2 * eps * eps)
         return shear
 
-    def visualize(self, figsize=(6,6), save=False, filepath=None):
+    def visualize(self, markersize=14, figsize=(6,6), save=False, filepath=None):
         """Visualize the network"""
 
         try:
@@ -527,7 +527,7 @@ class framework(object):
             marker="o",
             linestyle="",
             color="dodgerblue",
-            markersize=11,
+            markersize=markersize,
             alpha=1.0,
             zorder=2
         )
@@ -538,7 +538,7 @@ class framework(object):
                 marker="D",
                 linestyle="",
                 color="#e34234",
-                markersize=11,
+                markersize=markersize+1,
                 alpha=1.0,
                 zorder=2
             )
