@@ -12,7 +12,6 @@ setup(
     name="rigidpy",
     version="0.0.8",
     description="rigidpy package for rigidity analysis",
-    long_description=readme,
     keywords="rigidity physics math python flexibility condensedmatter",
     author="Varda Faghir Hagh, Mahdi Sadjadi",
     author_email="vardahagh@uchicago.edu",
