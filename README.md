@@ -45,6 +45,8 @@ print ("rigidity matrix:\n",F.rigidityMatrix())
 # calculate the eigenvalues of Hessian/dynamical matrix
 eigvals, eigvecs = F.eigenSpace(eigvals=(0,3))
 print("vibrational eigenvalues:\n",eigvals)
+# visualize network (pinned sites are shown as red diamonds)
+F.visulize()
 ```
 
 Output:
@@ -56,6 +58,10 @@ rigidity matrix:
 vibrational eigenvalues:
  [2.22044605e-16 6.33974596e-01 1.00000000e+00 2.36602540e+00]
 ```
+
+<p align="left">
+  <img src="./images/example_network.png" width="200" title="hover text">
+</p>
 
 
 ### Requirements
@@ -69,6 +75,16 @@ vibrational eigenvalues:
 
 * [Varda Faghir Hagh](https://github.com/vfaghirh)
 * [Mahdi Sadjadi](https://github.com/Mahdisadjadi)
+
+### Citations
+```
+@article{hagh2021rigidpy,
+  title={rigidPy: Rigidity Analysis in Python},
+  author={Hagh, Varda F and Sadjadi, Mahdi},
+  journal={arXiv preprint arXiv:2108.07195},
+  year={2021}
+}
+```
 
 ### License
 This project is licensed under the MIT License - see the LICENSE.md file for details.
