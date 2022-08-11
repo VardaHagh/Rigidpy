@@ -74,6 +74,7 @@ class framework(object):
         # mass=1,
         varcell: Union[np.array, list] = None,
         power: int = 2,
+        cutoff: float = None
     ):
 
         # Number of sites and spatial dimensions
@@ -93,7 +94,10 @@ class framework(object):
             self.boundary = "periodic"
         self.nbasis = nbasis = len(basis)  # number of basis vectors
         self.basisNorm = np.array([norm(base) for base in basis])
-        self.cutoff = 0.5 * np.amin(self.basisNorm)
+        if cutoff:
+            self.cutoff = cutoff
+        else:
+            self.cutoff = 0.5 * np.amin(self.basisNorm)
 
         if pins is None:
             self.pins = []

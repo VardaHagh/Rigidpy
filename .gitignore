@@ -8,3 +8,7 @@ rigidpy_2/
 todo
 notebooks/.ipynb_checkpoints/
 __pycache__
+build
+virtualenv
+*ipynb_checkpoints
+notebooks
