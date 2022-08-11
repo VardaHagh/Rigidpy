@@ -421,7 +421,13 @@ class framework(object):
         self-stress (or redundant bonds) and NB is the number of bonds.
         If there's no SSS, it returns `0`.
         """
-        RT = self.rigidityMatrix().T
+        R = self.rigidityMatrix()
+        RT = R.T
+        S = np.dot(R,RT)
+        sssEigenValues, sssEigenVectors = eigh(S)
+        SSS = sssEigenVectors[np.abs(sssEigenValues) < 1e-13]
+        
+        '''
         u, s, vh = np.linalg.svd(RT)
         nullity = self.NB - np.sum(s > 1e-10)
         SSS = vh[-nullity:].T
@@ -429,6 +435,8 @@ class framework(object):
             return 0
         else:
             return vh[-nullity:].T
+        '''
+        return SSS
 
     def elasticModulus(self, strainMatrix: np.ndarray) -> np.ndarray:
         """Return the elastic modulus for the given strain matrix.
