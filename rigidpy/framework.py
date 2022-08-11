@@ -154,7 +154,7 @@ class framework(object):
                 np.argmin(norm(item[0] - item[1] - transVectors, axis=1))
                 for item in coordinates[longBonds]
             ]
-            print(transVectors[index])
+            
             dr[indexLong] = dr[indexLong] - transVectors[index]
             # neighbor is in which neighboring box
             self.mn = regionIndex[index]
