@@ -429,7 +429,7 @@ class framework(object):
         RT = R.T
         S = np.dot(R,RT)
         sssEigenValues, sssEigenVectors = eigh(S)
-        SSS = sssEigenVectors[np.abs(sssEigenValues) < 1e-13]
+        SSS = sssEigenVectors[:,np.abs(sssEigenValues) < 1e-10]
         
         '''
         u, s, vh = np.linalg.svd(RT)
