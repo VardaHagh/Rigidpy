@@ -123,7 +123,7 @@ class framework(object):
             # in case system is 1D
             self.volume = self.basisNorm
         else:
-            volume = np.abs(np.product(eig(basis)[0]))
+            volume = np.abs(np.prod(eig(basis)[0]))
             if volume:
                 self.volume = volume
             else:
