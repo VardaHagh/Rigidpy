@@ -172,7 +172,7 @@ class circuitVolume(object):
             translationVecOld = direction
 
             # current volume, distance from center of mass, energy
-            volume = np.abs(np.product(np.linalg.eig(basis)[0]))
+            volume = np.abs(np.prod(np.linalg.eig(basis)[0]))
             dist = np.mean(norm(p - center, axis=1))
             energy = 0.5 * np.dot(self.K, (restLengths - lengths) ** 2)
 
